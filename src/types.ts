@@ -75,6 +75,31 @@ export interface MoonsRobotsConfig {
   disallow?: string[];
 }
 
+/**
+ * Addendum I: entri file prerender dari storage (ISR).
+ * `mtimeMs` dipakai untuk kebijakan `revalidate`.
+ */
+export interface PrerenderStorageEntry {
+  body: Uint8Array;
+  mtimeMs: number;
+}
+
+/**
+ * Addendum I: storage file prerender (baca + tulis). Default: file sistem
+ * lokal; implementasi bersama (Redis/S3/DB) membuka ISR multi-instance.
+ * `pathname` adalah path URL ternormalisasi (mis. "/blog/hello").
+ */
+export interface PrerenderStorage {
+  read(pathname: string): Promise<PrerenderStorageEntry | null>;
+  write(pathname: string, body: Uint8Array): Promise<void>;
+}
+
+/** Addendum I: konfigurasi ISR. */
+export interface MoonsIsrConfig {
+  /** Storage bersama untuk file prerender (opsional; default file lokal). */
+  storage?: PrerenderStorage;
+}
+
 /** Addendum H: hook lifecycle request (runtime server). */
 export interface MoonsHooks {
   /** Sebelum context/middleware; error di sini → 500. */
@@ -112,6 +137,8 @@ export interface MoonsConfig {
   robots?: MoonsRobotsConfig;
   /** Hook lifecycle request. */
   hooks?: MoonsHooks;
+  /** ISR: storage bersama untuk file prerender (Addendum I). */
+  isr?: MoonsIsrConfig;
 }
 
 /** Method HTTP yang legal sebagai handler `src/api` (PRD Addendum D.1). */

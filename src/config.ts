@@ -6,11 +6,13 @@ import type {
   MoonsConfig,
   MoonsHeaders,
   MoonsHooks,
+  MoonsIsrConfig,
   MoonsPlugin,
   MoonsRedirect,
   MoonsRobotsConfig,
   MoonsSecurityConfig,
   MoonsSitemapConfig,
+  PrerenderStorage,
 } from "./types";
 
 const ROOT_KEYS = [
@@ -25,6 +27,7 @@ const ROOT_KEYS = [
   "sitemap",
   "robots",
   "hooks",
+  "isr",
 ] as const;
 const SECURITY_KEYS = ["originWhitelist", "bodyLimitBytes", "serverOnlyPackages"] as const;
 const PLUGIN_KEYS = [
@@ -303,6 +306,37 @@ export function validateConfig(raw: unknown, options: ValidateConfigOptions = {}
     }
   }
 
+  const isr = config["isr"];
+  if (isr !== undefined) {
+    if (typeof isr !== "object" || isr === null || Array.isArray(isr)) {
+      fail("isr", "`isr` harus objek { storage? }", "Dipakai ISR/`revalidate` (Addendum I).", [
+        "Perbaiki bentuk `isr`, atau hapus key tersebut",
+      ]);
+    }
+    for (const key of Object.keys(isr as Record<string, unknown>)) {
+      if (key !== "storage") {
+        fail("isr", `key \`${key}\` tidak dikenal di \`isr\``, "Key yang valid: storage.", [
+          `Hapus key \`${key}\``,
+        ]);
+      }
+    }
+    const storage = (isr as Record<string, unknown>)["storage"];
+    if (
+      storage !== undefined &&
+      (typeof storage !== "object" ||
+        storage === null ||
+        typeof (storage as PrerenderStorage).read !== "function" ||
+        typeof (storage as PrerenderStorage).write !== "function")
+    ) {
+      fail(
+        "isr",
+        "`isr.storage` harus objek dengan method `read` dan `write`",
+        "Bentuk mengikuti `PrerenderStorage` (Addendum I).",
+        ["Pakai `createFileStorage()` dari `@moonsjs/vite/server`, atau implementasi sendiri"],
+      );
+    }
+  }
+
   return {
     routesDir,
     apiDir,
@@ -317,6 +351,7 @@ export function validateConfig(raw: unknown, options: ValidateConfigOptions = {}
     ...(sitemap === undefined ? {} : { sitemap: sitemap as MoonsSitemapConfig }),
     ...(robots === undefined ? {} : { robots: robots as MoonsRobotsConfig }),
     ...(hooks === undefined ? {} : { hooks: hooks as MoonsHooks }),
+    ...(isr === undefined ? {} : { isr: isr as MoonsIsrConfig }),
   };
 }
 

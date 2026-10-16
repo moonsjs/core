@@ -136,3 +136,29 @@ test("validateConfig Addendum C: security.serverOnlyPackages wajib array string"
   }
   expect(empty).toBeInstanceOf(MoonsError);
 });
+
+test("Addendum I: `isr.storage` valid diterima; bentuk salah → E_CONFIG_INVALID", () => {
+  const storage = {
+    read: async () => null,
+    write: async () => {},
+  };
+  const ok = validateConfig({ context: () => ({}), isr: { storage } });
+  expect(ok.isr?.storage).toBe(storage);
+
+  let badKey: unknown;
+  try {
+    validateConfig({ context: () => ({}), isr: { hook: 1 } });
+  } catch (error) {
+    badKey = error;
+  }
+  expect(badKey).toBeInstanceOf(MoonsError);
+  expect((badKey as MoonsError).code).toBe("E_CONFIG_INVALID");
+
+  let badStorage: unknown;
+  try {
+    validateConfig({ context: () => ({}), isr: { storage: { read: async () => null } } });
+  } catch (error) {
+    badStorage = error;
+  }
+  expect((badStorage as MoonsError).code).toBe("E_CONFIG_INVALID");
+});

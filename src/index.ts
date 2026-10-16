@@ -51,3 +51,4 @@ export type {
   ResolvedRoute,
   RouteDefinition,
 } from "./types";
+export type { PrerenderStorage, PrerenderStorageEntry, MoonsIsrConfig } from "./types";
