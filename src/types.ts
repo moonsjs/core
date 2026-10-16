@@ -157,6 +157,12 @@ export interface MoonsConfig {
   logging?: MoonsLoggingConfig;
   /** ISR: storage bersama untuk file prerender (Addendum I). */
   isr?: MoonsIsrConfig;
+  /**
+   * Kebijakan trailing slash URL halaman (Addendum M; sisa H.8): `"never"`
+   * (default perilaku lama: `/x/` → 308 `/x`) atau `"always"` (`/x` → 308
+   * `/x/`). Root, `/_moons/**`, dan path aset (ber-titik) dikecualikan.
+   */
+  trailingSlash?: "never" | "always";
 }
 
 /** Method HTTP yang legal sebagai handler `src/api` (PRD Addendum D.1). */

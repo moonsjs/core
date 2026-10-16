@@ -30,6 +30,7 @@ const ROOT_KEYS = [
   "hooks",
   "isr",
   "logging",
+  "trailingSlash",
 ] as const;
 const SECURITY_KEYS = ["originWhitelist", "bodyLimitBytes", "serverOnlyPackages", "trustProxy"] as const;
 const PLUGIN_KEYS = [
@@ -312,6 +313,16 @@ export function validateConfig(raw: unknown, options: ValidateConfigOptions = {}
     }
   }
 
+  const trailingSlash = config["trailingSlash"];
+  if (trailingSlash !== undefined && trailingSlash !== "never" && trailingSlash !== "always") {
+    fail(
+      "trailingSlash",
+      '`trailingSlash` harus "never" atau "always"',
+      "Addendum M: kebijakan URL halaman (308 redirect).",
+      ['Gunakan `trailingSlash: "never"` atau `"always"`, atau hapus key tersebut'],
+    );
+  }
+
   const logging = config["logging"];
   if (logging !== undefined) {
     if (typeof logging !== "object" || logging === null || Array.isArray(logging)) {
@@ -391,6 +402,9 @@ export function validateConfig(raw: unknown, options: ValidateConfigOptions = {}
     ...(hooks === undefined ? {} : { hooks: hooks as MoonsHooks }),
     ...(isr === undefined ? {} : { isr: isr as MoonsIsrConfig }),
     ...(logging === undefined ? {} : { logging: logging as MoonsLoggingConfig }),
+    ...(trailingSlash === undefined
+      ? {}
+      : { trailingSlash: trailingSlash as "never" | "always" }),
   };
 }
 
