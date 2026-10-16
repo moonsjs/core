@@ -1,0 +1,87 @@
+/** Tipe publik `@moonsjs/core` sesuai PRD §6.1 dan §6.2. */
+
+export interface MoonsSecurityConfig {
+  originWhitelist?: string[];
+  bodyLimitBytes?: number;
+  /**
+   * Tambahan paket server-only untuk gate build (PRD Addendum C) — digabung
+   * dengan daftar bawaan; default `[]`. Entri bawaan tidak dapat dihapus.
+   */
+  serverOnlyPackages?: string[];
+}
+
+export interface MiddlewareArgs {
+  req: Request;
+  ctx: Ctx;
+  next: () => Promise<Response>;
+}
+
+export type Middleware = (args: MiddlewareArgs) => Promise<Response>;
+
+export interface RouteDefinition {
+  /** "/users/:id" (bentuk PRD §6.1). Catch-all direpresentasikan sebagai "*". */
+  path: string;
+  /** Absolute posix path. */
+  file: string;
+  kind: "page" | "layout" | "error" | "404" | "middleware";
+  /** Nama param berurutan, termasuk param catch-all di akhir. */
+  params: string[];
+}
+
+export interface App {
+  readonly ready: boolean;
+  readonly version: string;
+}
+
+export interface MoonsPlugin {
+  name: string;
+  addRoute?: (route: RouteDefinition) => void;
+  addMiddleware?: (mw: Middleware) => void;
+  extendContext?: <T>(fn: (ctx: Ctx) => T) => void;
+  onStart?: (app: App) => void | Promise<void>;
+  onReady?: (app: App) => void | Promise<void>;
+  onShutdown?: (app: App) => void | Promise<void>;
+}
+
+export interface MoonsConfig {
+  /** Default: "src/routes". */
+  routesDir: string;
+  /** Direktori endpoint HTTP mentah (PRD Addendum D.1). Default: "src/api". */
+  apiDir?: string;
+  /**
+   * Catatan: RFC §6.1 menulis `=> Promise<Ctx> | Ctx`, tetapi §13 menurunkan
+   * global `Ctx` dari return type fungsi ini — memakai `Ctx` di sini membuat
+   * referensi sirkular. Karena itu return type-nya `unknown`.
+   */
+  context: (req: Request) => Promise<unknown> | unknown;
+  middleware?: Middleware[];
+  security?: MoonsSecurityConfig;
+  plugins?: MoonsPlugin[];
+}
+
+/** Method HTTP yang legal sebagai handler `src/api` (PRD Addendum D.1). */
+export type ApiMethod = "GET" | "HEAD" | "POST" | "PUT" | "PATCH" | "DELETE" | "OPTIONS";
+
+/** Definisi endpoint API hasil scan `src/api` (URL = `/ <prefix> / <rel>`). */
+export interface ApiRouteDefinition {
+  /** URL penuh, mis. "/api/webhooks/:provider". */
+  path: string;
+  /** Absolute posix path file. */
+  file: string;
+  /** Nama param berurutan (dynamic/catch-all). */
+  params: string[];
+}
+
+/** Argumen handler `src/api` (PRD Addendum D.1). */
+export interface ApiHandlerArgs {
+  req: Request;
+  params: Record<string, string>;
+  ctx: Ctx;
+}
+
+export interface ResolvedRoute {
+  route: RouteDefinition;
+  /** Dari root ke leaf, tidak termasuk route. */
+  layouts: RouteDefinition[];
+  params: Record<string, string>;
+}

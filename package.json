@@ -1,0 +1,53 @@
+{
+  "name": "@moonsjs/core",
+  "version": "0.1.5",
+  "type": "module",
+  "license": "MIT",
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/moonsjs/core.git"
+  },
+  "homepage": "https://github.com/moonsjs/docs",
+  "bugs": {
+    "url": "https://github.com/moonsjs/core/issues"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "bun": "./src/index.ts",
+      "default": "./dist/index.js"
+    },
+    "./serialize": {
+      "types": "./src/serialize.ts",
+      "bun": "./src/serialize.ts",
+      "default": "./dist/serialize.js"
+    },
+    "./signals": {
+      "types": "./src/signals.ts",
+      "bun": "./src/signals.ts",
+      "default": "./dist/signals.js"
+    },
+    "./response": {
+      "types": "./src/response.ts",
+      "bun": "./src/response.ts",
+      "default": "./dist/response.js"
+    }
+  },
+  "scripts": {
+    "prepack": "bun run build",
+    "build": "rm -rf dist && tsc -p tsconfig.json --emitDeclarationOnly && bun build src/index.ts src/serialize.ts src/signals.ts src/response.ts --outdir dist --target node --format esm --splitting --sourcemap=external --external devalue",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "devalue": "^6.0.3"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.3",
+    "typescript": "^7.0.2"
+  }
+}

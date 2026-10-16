@@ -1,0 +1,260 @@
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { MoonsError } from "./errors";
+import type { Middleware, MoonsConfig, MoonsPlugin, MoonsSecurityConfig } from "./types";
+
+const ROOT_KEYS = ["routesDir", "apiDir", "context", "middleware", "security", "plugins"] as const;
+const SECURITY_KEYS = ["originWhitelist", "bodyLimitBytes", "serverOnlyPackages"] as const;
+const PLUGIN_KEYS = [
+  "name",
+  "addRoute",
+  "addMiddleware",
+  "extendContext",
+  "onStart",
+  "onReady",
+  "onShutdown",
+] as const;
+
+const DEFAULT_ROUTES_DIR = "src/routes";
+const DEFAULT_API_DIR = "src/api";
+const DEFAULT_BODY_LIMIT_BYTES = 1_000_000;
+
+/**
+ * Identity helper yang **mempertahankan tipe literal** config pengguna.
+ * Penting untuk typegen §13: `Ctx` dihitung dari `typeof config.context`,
+ * sehingga return type `context` tidak boleh ter-widen menjadi `unknown`.
+ */
+export function defineConfig<T extends MoonsConfig>(config: T): T {
+  return config;
+}
+
+export interface ValidateConfigOptions {
+  /** Path file config, untuk pesan error (`file:line`). */
+  file?: string;
+  /** Jika diisi, `routesDir` diperiksa keberadaannya relatif root ini. */
+  projectRoot?: string;
+}
+
+/**
+ * Validasi config sesuai PRD §14.3. Melempar `E_CONFIG_INVALID` bila invalid
+ * dan mengembalikan config yang sudah dinormalisasi (default diterapkan).
+ */
+export function validateConfig(raw: unknown, options: ValidateConfigOptions = {}): MoonsConfig {
+  const file = options.file ?? "moons.config.ts";
+  const rawText = readIfExists(file);
+
+  function fail(
+    key: string | null,
+    message: string,
+    details: string,
+    suggestions: string[],
+  ): never {
+    throw new MoonsError({
+      code: "E_CONFIG_INVALID",
+      file,
+      line: key === null ? 1 : findKeyLine(rawText, key),
+      message,
+      details,
+      suggestions,
+    });
+  }
+
+  if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
+    fail(null, "konfigurasi harus berupa objek", "Export default moons.config.ts harus objek config.", [
+      "Pastikan export default berisi objek, bukan nilai lain",
+    ]);
+  }
+
+  const config = raw as Record<string, unknown>;
+
+  for (const key of Object.keys(config)) {
+    if (!ROOT_KEYS.includes(key as (typeof ROOT_KEYS)[number])) {
+      fail(
+        key,
+        `key \`${key}\` tidak dikenal`,
+        `Key yang valid: ${ROOT_KEYS.join(", ")}.`,
+        [`Hapus key \`${key}\`, atau perbaiki ejaannya`],
+      );
+    }
+  }
+
+  if (typeof config["context"] !== "function") {
+    fail(
+      "context",
+      "`context` tidak ada atau bukan fungsi",
+      "`context` wajib berupa fungsi `(req) => Ctx`.",
+      ["Tambahkan `context: async (req) => ({ ... })` di moons.config.ts"],
+    );
+  }
+
+  const routesDir = config["routesDir"] ?? DEFAULT_ROUTES_DIR;
+  if (typeof routesDir !== "string" || routesDir.length === 0) {
+    fail("routesDir", "`routesDir` harus string non-kosong", "Default-nya \"src/routes\".", [
+      "Hapus `routesDir` untuk memakai default, atau isi dengan path direktori route",
+    ]);
+  }
+
+  if (
+    options.projectRoot !== undefined &&
+    !existsSync(resolve(options.projectRoot, routesDir))
+  ) {
+    fail(
+      "routesDir",
+      `direktori route \`${routesDir}\` tidak ditemukan`,
+      `Tidak ada direktori \`${routesDir}\` di ${options.projectRoot}.`,
+      ["Buat direktori tersebut dan isi minimal satu file route", "Atau ubah `routesDir`"],
+    );
+  }
+
+  const apiDir = config["apiDir"] ?? DEFAULT_API_DIR;
+  if (typeof apiDir !== "string" || apiDir.length === 0) {
+    fail("apiDir", "`apiDir` harus string non-kosong", "Default-nya \"src/api\".", [
+      "Hapus `apiDir` untuk memakai default, atau isi dengan path direktorinya",
+    ]);
+  }
+
+  const middleware = config["middleware"] ?? [];
+  if (!Array.isArray(middleware) || middleware.some((mw) => typeof mw !== "function")) {
+    fail("middleware", "`middleware` harus array fungsi", "Setiap item middleware adalah fungsi `Middleware`.", [
+      "Perbaiki isi array `middleware`, atau hapus key tersebut",
+    ]);
+  }
+
+  const plugins = config["plugins"] ?? [];
+  if (
+    !Array.isArray(plugins) ||
+    plugins.some(
+      (plugin) => typeof plugin !== "object" || plugin === null || typeof (plugin as MoonsPlugin).name !== "string",
+    )
+  ) {
+    fail("plugins", "`plugins` harus array plugin dengan properti `name` string", "Plugin mengikuti bentuk ", [
+      "Perbaiki isi array `plugins`, atau hapus key tersebut",
+    ]);
+  }
+
+  // §14.4: "Lebih dari itu = ditolak" — key plugin di luar kontrak menggagalkan config.
+  for (const plugin of plugins as MoonsPlugin[]) {
+    for (const key of Object.keys(plugin)) {
+      if (!PLUGIN_KEYS.includes(key as (typeof PLUGIN_KEYS)[number])) {
+        fail(
+          "plugins",
+          `plugin \`${plugin.name}\` memakai key \`${key}\` yang tidak dikenal`,
+          `Key plugin yang valid: ${PLUGIN_KEYS.join(", ")}.`,
+          [`Hapus key \`${key}\` dari plugin \`${plugin.name}\``],
+        );
+      }
+      const value = (plugin as unknown as Record<string, unknown>)[key];
+      if (key !== "name" && value !== undefined && typeof value !== "function") {
+        fail(
+          "plugins",
+          `hook \`${key}\` pada plugin \`${plugin.name}\` harus fungsi`,
+          "Hook plugin mengikuti bentuk ",
+          [`Perbaiki bentuk \`${key}\`, atau hapus`],
+        );
+      }
+    }
+  }
+
+  const security = validateSecurity(config["security"], fail);
+  const context = config["context"] as MoonsConfig["context"];
+
+  return {
+    routesDir,
+    apiDir,
+    context,
+    middleware: middleware as Middleware[],
+    security,
+    plugins: plugins as MoonsPlugin[],
+  };
+}
+
+function validateSecurity(
+  raw: unknown,
+  fail: (key: string | null, message: string, details: string, suggestions: string[]) => never,
+): Required<MoonsSecurityConfig> {
+  const defaults: Required<MoonsSecurityConfig> = {
+    originWhitelist: [],
+    bodyLimitBytes: DEFAULT_BODY_LIMIT_BYTES,
+    serverOnlyPackages: [],
+  };
+
+  if (raw === undefined) {
+    return defaults;
+  }
+
+  if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
+    fail("security", "`security` harus objek", "Lihat bentuknya ", [
+      "Perbaiki isi `security`, atau hapus key tersebut",
+    ]);
+  }
+
+  const security = raw as Record<string, unknown>;
+
+  for (const key of Object.keys(security)) {
+    if (!SECURITY_KEYS.includes(key as (typeof SECURITY_KEYS)[number])) {
+      fail(
+        key,
+        `key \`${key}\` tidak dikenal di \`security\``,
+        `Key yang valid: ${SECURITY_KEYS.join(", ")}.`,
+        [`Hapus key \`${key}\`, atau perbaiki ejaannya`],
+      );
+    }
+  }
+
+  const originWhitelist = security["originWhitelist"];
+  if (
+    originWhitelist !== undefined &&
+    (!Array.isArray(originWhitelist) || originWhitelist.some((origin) => typeof origin !== "string"))
+  ) {
+    fail("originWhitelist", "`originWhitelist` harus array string", "Setiap item adalah origin lengkap.", [
+      "Perbaiki isi `originWhitelist`, atau hapus key tersebut",
+    ]);
+  }
+
+  const bodyLimitBytes = security["bodyLimitBytes"];
+  if (
+    bodyLimitBytes !== undefined &&
+    (typeof bodyLimitBytes !== "number" || !Number.isFinite(bodyLimitBytes) || bodyLimitBytes <= 0)
+  ) {
+    fail("bodyLimitBytes", "`bodyLimitBytes` harus number positif", "Default: 1_000_000 byte.", [
+      "Perbaiki nilai `bodyLimitBytes`, atau hapus key tersebut",
+    ]);
+  }
+
+  const serverOnlyPackages = security["serverOnlyPackages"];
+  if (
+    serverOnlyPackages !== undefined &&
+    (!Array.isArray(serverOnlyPackages) ||
+      serverOnlyPackages.some((name) => typeof name !== "string" || name.length === 0))
+  ) {
+    fail(
+      "security",
+      "`security.serverOnlyPackages` harus array nama paket (string non-kosong)",
+      "Gate paket server-only mencocokkan nama paket npm hasil resolve.",
+      ["Isi dengan nama paket npm, mis. [\"pg\", \"drizzle-orm\"], atau hapus key tersebut"],
+    );
+  }
+
+  return {
+    originWhitelist: (originWhitelist as string[] | undefined) ?? defaults.originWhitelist,
+    bodyLimitBytes: (bodyLimitBytes as number | undefined) ?? defaults.bodyLimitBytes,
+    serverOnlyPackages:
+      (serverOnlyPackages as string[] | undefined) ?? defaults.serverOnlyPackages,
+  };
+}
+
+function readIfExists(file: string): string {
+  try {
+    return readFileSync(file, "utf8");
+  } catch {
+    return "";
+  }
+}
+
+function findKeyLine(text: string, key: string): number {
+  const index = text.indexOf(key);
+  if (index === -1) {
+    return 1;
+  }
+  return text.slice(0, index).split("\n").length;
+}
