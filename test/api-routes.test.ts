@@ -67,5 +67,5 @@ test("scanApiRoutes: konflik pola (nama param berbeda) → E_API_ROUTE_CONFLICT"
   }
   expect(thrown).toBeInstanceOf(MoonsError);
   expect((thrown as MoonsError).code).toBe("E_API_ROUTE_CONFLICT");
-  expect((thrown as MoonsError).format()).toContain("Saran:");
+  expect((thrown as MoonsError).format()).toContain("Suggestion:");
 });

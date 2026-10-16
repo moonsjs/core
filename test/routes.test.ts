@@ -62,7 +62,7 @@ test("melempar E_ROUTE_CONFLICT untuk dua dynamic di segmen yang sama", () => {
   expect(formatted).toContain("[moons] E_ROUTE_CONFLICT");
   expect(formatted).toContain("users/[id].tsx");
   expect(formatted).toContain("users/[name].tsx");
-  expect(formatted).toContain("Saran:");
+  expect(formatted).toContain("Suggestion:");
 });
 
 test("konflik statik (index vs file) juga terdeteksi", () => {

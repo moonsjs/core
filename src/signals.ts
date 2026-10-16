@@ -40,17 +40,17 @@ export function redirect(to: string, status: RedirectStatus = 302): never {
   if (typeof to !== "string" || to.trim().length === 0) {
     throw new MoonsError({
       code: "E_INTERNAL",
-      message: "`redirect(to)` membutuhkan URL tujuan non-kosong",
-      details: "Sinyal redirect dipakai di loader/meta.",
-      suggestions: ["Contoh: `redirect(\"/login\")`, atau `redirect(\"/\", 303)`"],
+      message: "`redirect(to)` requires a non-empty destination URL",
+      details: "Redirect signals are used in loaders/meta.",
+      suggestions: ["Example: `redirect(\"/login\")`, or `redirect(\"/\", 303)`"],
     });
   }
   if (!REDIRECT_STATUSES.includes(status)) {
     throw new MoonsError({
       code: "E_INTERNAL",
-      message: `status redirect \`${status}\` tidak didukung`,
-      details: `Status yang didukung: ${REDIRECT_STATUSES.join(", ")}.`,
-      suggestions: ["Gunakan 302 (default) atau 303/307/308 sesuai kebutuhan"],
+      message: `unsupported redirect status \`${status}\``,
+      details: `Supported statuses: ${REDIRECT_STATUSES.join(", ")}.`,
+      suggestions: ["Use 302 (default) or 303/307/308 as needed"],
     });
   }
   throw new RedirectSignal(to, status);

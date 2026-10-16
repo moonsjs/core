@@ -58,18 +58,18 @@ test("setiap kode §15 memakai format §15.1 (trigger & bentuk pesan)", () => {
       code,
       file: "src/contoh.ts",
       line: 3,
-      message: `pesan untuk ${code}`,
-      details: "Penjelasan singkat mengapa ini error.",
-      suggestions: ["Saran pertama", "Saran kedua"],
+      message: `message for ${code}`,
+      details: "Short explanation of why this is an error.",
+      suggestions: ["First suggestion", "Second suggestion"],
     });
 
     const formatted = error.format();
 
     expect(formatted.startsWith(`[moons] ${code}\n\n`)).toBe(true);
     expect(formatted).toContain("\nsrc/contoh.ts:3\n");
-    expect(formatted).toContain(`  pesan untuk ${code}\n`);
-    expect(formatted).toContain("Penjelasan singkat mengapa ini error.");
-    expect(formatted).toContain("\nSaran:\n  1. Saran pertama\n  2. Saran kedua");
+    expect(formatted).toContain(`  message for ${code}\n`);
+    expect(formatted).toContain("Short explanation of why this is an error.");
+    expect(formatted).toContain("\nSuggestion:\n  1. First suggestion\n  2. Second suggestion");
     expect(formatted).not.toContain("undefined");
     expect(error.message).toBe(formatted);
   }

@@ -92,8 +92,8 @@ export function validateConfig(raw: unknown, options: ValidateConfigOptions = {}
   }
 
   if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
-    fail(null, "konfigurasi harus berupa objek", "Export default moons.config.ts harus objek config.", [
-      "Pastikan export default berisi objek, bukan nilai lain",
+    fail(null, "config must be an object", "The default export of moons.config.ts must be a config object.", [
+      "Make sure the default export is an object, not another value",
     ]);
   }
 
@@ -103,9 +103,9 @@ export function validateConfig(raw: unknown, options: ValidateConfigOptions = {}
     if (!ROOT_KEYS.includes(key as (typeof ROOT_KEYS)[number])) {
       fail(
         key,
-        `key \`${key}\` tidak dikenal`,
-        `Key yang valid: ${ROOT_KEYS.join(", ")}.`,
-        [`Hapus key \`${key}\`, atau perbaiki ejaannya`],
+        `unknown key \`${key}\``,
+        `Valid keys: ${ROOT_KEYS.join(", ")}.`,
+        [`Remove key \`${key}\`, or fix its spelling`],
       );
     }
   }
@@ -113,16 +113,16 @@ export function validateConfig(raw: unknown, options: ValidateConfigOptions = {}
   if (typeof config["context"] !== "function") {
     fail(
       "context",
-      "`context` tidak ada atau bukan fungsi",
-      "`context` wajib berupa fungsi `(req) => Ctx`.",
-      ["Tambahkan `context: async (req) => ({ ... })` di moons.config.ts"],
+      "`context` is missing or not a function",
+      "`context` must be a function `(req) => Ctx`.",
+      ["Add `context: async (req) => ({ ... })` to moons.config.ts"],
     );
   }
 
   const routesDir = config["routesDir"] ?? DEFAULT_ROUTES_DIR;
   if (typeof routesDir !== "string" || routesDir.length === 0) {
-    fail("routesDir", "`routesDir` harus string non-kosong", "Default-nya \"src/routes\".", [
-      "Hapus `routesDir` untuk memakai default, atau isi dengan path direktori route",
+    fail("routesDir", "`routesDir` must be a non-empty string", "Default: \"src/routes\".", [
+      "Remove `routesDir` to use the default, or set it to the routes directory path",
     ]);
   }
 
@@ -132,23 +132,23 @@ export function validateConfig(raw: unknown, options: ValidateConfigOptions = {}
   ) {
     fail(
       "routesDir",
-      `direktori route \`${routesDir}\` tidak ditemukan`,
-      `Tidak ada direktori \`${routesDir}\` di ${options.projectRoot}.`,
-      ["Buat direktori tersebut dan isi minimal satu file route", "Atau ubah `routesDir`"],
+      `routes directory \`${routesDir}\` not found`,
+      `No \`${routesDir}\` directory at ${options.projectRoot}.`,
+      ["Create that directory with at least one route file", "Or change `routesDir`"],
     );
   }
 
   const apiDir = config["apiDir"] ?? DEFAULT_API_DIR;
   if (typeof apiDir !== "string" || apiDir.length === 0) {
-    fail("apiDir", "`apiDir` harus string non-kosong", "Default-nya \"src/api\".", [
-      "Hapus `apiDir` untuk memakai default, atau isi dengan path direktorinya",
+    fail("apiDir", "`apiDir` must be a non-empty string", "Default: \"src/api\".", [
+      "Remove `apiDir` to use the default, or set it to the API directory path",
     ]);
   }
 
   const middleware = config["middleware"] ?? [];
   if (!Array.isArray(middleware) || middleware.some((mw) => typeof mw !== "function")) {
-    fail("middleware", "`middleware` harus array fungsi", "Setiap item middleware adalah fungsi `Middleware`.", [
-      "Perbaiki isi array `middleware`, atau hapus key tersebut",
+    fail("middleware", "`middleware` must be an array of functions", "Each middleware item is a `Middleware` function.", [
+      "Fix the `middleware` array, or remove the key",
     ]);
   }
 
@@ -159,8 +159,8 @@ export function validateConfig(raw: unknown, options: ValidateConfigOptions = {}
       (plugin) => typeof plugin !== "object" || plugin === null || typeof (plugin as MoonsPlugin).name !== "string",
     )
   ) {
-    fail("plugins", "`plugins` harus array plugin dengan properti `name` string", "Plugin mengikuti bentuk ", [
-      "Perbaiki isi array `plugins`, atau hapus key tersebut",
+    fail("plugins", "`plugins` must be an array of plugins with a string `name` property", "Plugin shape follows ", [
+      "Fix the `plugins` array, or remove the key",
     ]);
   }
 
@@ -170,18 +170,18 @@ export function validateConfig(raw: unknown, options: ValidateConfigOptions = {}
       if (!PLUGIN_KEYS.includes(key as (typeof PLUGIN_KEYS)[number])) {
         fail(
           "plugins",
-          `plugin \`${plugin.name}\` memakai key \`${key}\` yang tidak dikenal`,
-          `Key plugin yang valid: ${PLUGIN_KEYS.join(", ")}.`,
-          [`Hapus key \`${key}\` dari plugin \`${plugin.name}\``],
+          `plugin \`${plugin.name}\` uses unknown key \`${key}\``,
+          `Valid plugin keys: ${PLUGIN_KEYS.join(", ")}.`,
+          [`Remove key \`${key}\` from plugin \`${plugin.name}\``],
         );
       }
       const value = (plugin as unknown as Record<string, unknown>)[key];
       if (key !== "name" && value !== undefined && typeof value !== "function") {
         fail(
           "plugins",
-          `hook \`${key}\` pada plugin \`${plugin.name}\` harus fungsi`,
-          "Hook plugin mengikuti bentuk ",
-          [`Perbaiki bentuk \`${key}\`, atau hapus`],
+          `hook \`${key}\` on plugin \`${plugin.name}\` must be a function`,
+          "Plugin hooks follow the shape ",
+          [`Fix the \`${key}\` shape, or remove it`],
         );
       }
     }
@@ -193,45 +193,45 @@ export function validateConfig(raw: unknown, options: ValidateConfigOptions = {}
   // Addendum H: headers / redirects / sitemap / robots / hooks.
   const headers = config["headers"] ?? {};
   if (typeof headers !== "object" || headers === null || Array.isArray(headers)) {
-    fail("headers", "`headers` harus objek nama→nilai", "Contoh: { \"x-frame-options\": \"DENY\" }.", [
-      "Perbaiki bentuk `headers`, atau hapus key tersebut",
+    fail("headers", "`headers` must be an object of name→value", "Example: { \"x-frame-options\": \"DENY\" }.", [
+      "Fix the `headers` shape, or remove the key",
     ]);
   }
   for (const [name, value] of Object.entries(headers as Record<string, unknown>)) {
     if (typeof value !== "string" || name.trim().length === 0) {
-      fail("headers", `header \`${name}\` harus bernilai string`, "Nama dan nilai header tidak boleh kosong.", [
-        "Perbaiki nilai header tersebut, atau hapus",
+      fail("headers", `header \`${name}\` must be a string`, "Header names and values must not be empty.", [
+        "Fix that header value, or remove it",
       ]);
     }
   }
 
   const redirects = config["redirects"] ?? [];
   if (!Array.isArray(redirects)) {
-    fail("redirects", "`redirects` harus array", "Setiap item: { from, to, status? }.", [
-      "Perbaiki bentuk `redirects`, atau hapus key tersebut",
+    fail("redirects", "`redirects` must be an array", "Each item: { from, to, status? }.", [
+      "Fix the `redirects` shape, or remove the key",
     ]);
   }
   for (const item of redirects as unknown[]) {
     if (typeof item !== "object" || item === null || Array.isArray(item)) {
-      fail("redirects", "item `redirects` harus objek { from, to }", "Status opsional: 301/302/307/308.", [
-        "Perbaiki item tersebut, atau hapus",
+      fail("redirects", "each `redirects` item must be an object { from, to }", "Status is optional: 301/302/307/308.", [
+        "Fix that item, or remove it",
       ]);
     }
     const record = item as Record<string, unknown>;
     if (typeof record["from"] !== "string" || !record["from"].startsWith("/")) {
-      fail("redirects", "`from` harus path diawali `/`", "Contoh: from: \"/lama\".", [
-        "Perbaiki nilai `from`",
+      fail("redirects", "`from` must be a path starting with `/`", "Example: from: \"/old\".", [
+        "Fix the `from` value",
       ]);
     }
     if (typeof record["to"] !== "string" || record["to"].length === 0) {
-      fail("redirects", "`to` harus string tujuan non-kosong", "Contoh: to: \"/baru\" atau URL penuh.", [
-        "Perbaiki nilai `to`",
+      fail("redirects", "`to` must be a non-empty destination string", "Example: to: \"/new\" or a full URL.", [
+        "Fix the `to` value",
       ]);
     }
     const status = record["status"];
     if (status !== undefined && status !== 301 && status !== 302 && status !== 307 && status !== 308) {
-      fail("redirects", "`status` harus 301, 302, 307, atau 308", "Default 301.", [
-        "Perbaiki nilai `status`, atau hapus (memakai 301)",
+      fail("redirects", "`status` must be 301, 302, 307, or 308", "Defaults to 301.", [
+        "Fix the `status` value, or remove it (defaults to 301)",
       ]);
     }
   }
@@ -239,27 +239,27 @@ export function validateConfig(raw: unknown, options: ValidateConfigOptions = {}
   const sitemap = config["sitemap"];
   if (sitemap !== undefined) {
     if (typeof sitemap !== "object" || sitemap === null || Array.isArray(sitemap)) {
-      fail("sitemap", "`sitemap` harus objek { site, exclude? }", "Dipakai saat build statis.", [
-        "Perbaiki bentuk `sitemap`, atau hapus key tersebut",
+      fail("sitemap", "`sitemap` must be an object { site, exclude? }", "Used during static build.", [
+        "Fix the `sitemap` shape, or remove the key",
       ]);
     }
     const record = sitemap as Record<string, unknown>;
     for (const key of Object.keys(record)) {
       if (key !== "site" && key !== "exclude") {
-        fail("sitemap", `key \`${key}\` tidak dikenal di \`sitemap\``, "Key yang valid: site, exclude.", [
-          `Hapus key \`${key}\``,
+        fail("sitemap", `unknown key \`${key}\` in \`sitemap\``, "Valid keys: site, exclude.", [
+          `Remove key \`${key}\``,
         ]);
       }
     }
     if (typeof record["site"] !== "string" || !/^https?:\/\//.test(record["site"])) {
-      fail("sitemap", "`sitemap.site` harus URL http(s)", "Contoh: site: \"https://example.com\".", [
-        "Perbaiki nilai `site`",
+      fail("sitemap", "`sitemap.site` must be an http(s) URL", "Example: site: \"https://example.com\".", [
+        "Fix the `site` value",
       ]);
     }
     const exclude = record["exclude"];
     if (exclude !== undefined && (!Array.isArray(exclude) || exclude.some((x) => typeof x !== "string"))) {
-      fail("sitemap", "`sitemap.exclude` harus array string", "Isi dengan prefix path, mis. [\"/404\"].", [
-        "Perbaiki nilai `exclude`, atau hapus",
+      fail("sitemap", "`sitemap.exclude` must be an array of strings", "Fill it with path prefixes, e.g. [\"/404\"].", [
+        "Fix the `exclude` value, or remove it",
       ]);
     }
   }
@@ -267,27 +267,27 @@ export function validateConfig(raw: unknown, options: ValidateConfigOptions = {}
   const robots = config["robots"];
   if (robots !== undefined) {
     if (typeof robots !== "object" || robots === null || Array.isArray(robots)) {
-      fail("robots", "`robots` harus objek { sitemap?, disallow? }", "Dipakai saat build statis.", [
-        "Perbaiki bentuk `robots`, atau hapus key tersebut",
+      fail("robots", "`robots` must be an object { sitemap?, disallow? }", "Used during static build.", [
+        "Fix the `robots` shape, or remove the key",
       ]);
     }
     const record = robots as Record<string, unknown>;
     for (const key of Object.keys(record)) {
       if (key !== "sitemap" && key !== "disallow") {
-        fail("robots", `key \`${key}\` tidak dikenal di \`robots\``, "Key yang valid: sitemap, disallow.", [
-          `Hapus key \`${key}\``,
+        fail("robots", `unknown key \`${key}\` in \`robots\``, "Valid keys: sitemap, disallow.", [
+          `Remove key \`${key}\``,
         ]);
       }
     }
     if (record["sitemap"] !== undefined && typeof record["sitemap"] !== "boolean") {
-      fail("robots", "`robots.sitemap` harus boolean", "Default true bila sitemap dikonfigurasi.", [
-        "Perbaiki nilai `sitemap`, atau hapus",
+      fail("robots", "`robots.sitemap` must be a boolean", "Defaults to true when sitemap is configured.", [
+        "Fix the `sitemap` value, or remove it",
       ]);
     }
     const disallow = record["disallow"];
     if (disallow !== undefined && (!Array.isArray(disallow) || disallow.some((x) => typeof x !== "string"))) {
-      fail("robots", "`robots.disallow` harus array string", "Isi dengan prefix path, mis. [\"/internal\"].", [
-        "Perbaiki nilai `disallow`, atau hapus",
+      fail("robots", "`robots.disallow` must be an array of strings", "Fill it with path prefixes, e.g. [\"/internal\"].", [
+        "Fix the `disallow` value, or remove it",
       ]);
     }
   }
@@ -295,19 +295,19 @@ export function validateConfig(raw: unknown, options: ValidateConfigOptions = {}
   const hooks = config["hooks"];
   if (hooks !== undefined) {
     if (typeof hooks !== "object" || hooks === null || Array.isArray(hooks)) {
-      fail("hooks", "`hooks` harus objek { onRequest?, onResponse?, onError? }", "Semua hook menerima Request.", [
-        "Perbaiki bentuk `hooks`, atau hapus key tersebut",
+      fail("hooks", "`hooks` must be an object { onRequest?, onResponse?, onError? }", "All hooks receive a Request.", [
+        "Fix the `hooks` shape, or remove the key",
       ]);
     }
     for (const [name, value] of Object.entries(hooks as Record<string, unknown>)) {
       if (name !== "onRequest" && name !== "onResponse" && name !== "onError") {
-        fail("hooks", `hook \`${name}\` tidak dikenal`, "Hook yang valid: onRequest, onResponse, onError.", [
-          `Hapus hook \`${name}\``,
+        fail("hooks", `unknown hook \`${name}\``, "Valid hooks: onRequest, onResponse, onError.", [
+          `Remove hook \`${name}\``,
         ]);
       }
       if (typeof value !== "function") {
-        fail("hooks", `hook \`${name}\` harus fungsi`, "Contoh: onResponse: async (res, req) => { ... }.", [
-          `Perbaiki hook \`${name}\`, atau hapus`,
+        fail("hooks", `hook \`${name}\` must be a function`, "Example: onResponse: async (res, req) => { ... }.", [
+          `Fix hook \`${name}\`, or remove it`,
         ]);
       }
     }
@@ -317,31 +317,31 @@ export function validateConfig(raw: unknown, options: ValidateConfigOptions = {}
   if (trailingSlash !== undefined && trailingSlash !== "never" && trailingSlash !== "always") {
     fail(
       "trailingSlash",
-      '`trailingSlash` harus "never" atau "always"',
-      "Addendum M: kebijakan URL halaman (308 redirect).",
-      ['Gunakan `trailingSlash: "never"` atau `"always"`, atau hapus key tersebut'],
+      '`trailingSlash` must be "never" or "always"',
+      "Addendum M: page URL policy (308 redirect).",
+      ['Use `trailingSlash: "never"` or `"always"`, or remove the key'],
     );
   }
 
   const logging = config["logging"];
   if (logging !== undefined) {
     if (typeof logging !== "object" || logging === null || Array.isArray(logging)) {
-      fail("logging", "`logging` harus objek { accessLog?, json?, redact? }", "Addendum L.3.", [
-        "Perbaiki bentuk `logging`, atau hapus key tersebut",
+      fail("logging", "`logging` must be an object { accessLog?, json?, redact? }", "Addendum L.3.", [
+        "Fix the `logging` shape, or remove the key",
       ]);
     }
     const loggingRecord = logging as Record<string, unknown>;
     for (const key of Object.keys(loggingRecord)) {
       if (key !== "accessLog" && key !== "json" && key !== "redact") {
-        fail("logging", `key \`${key}\` tidak dikenal di \`logging\``, "Key yang valid: accessLog, json, redact.", [
-          `Hapus key \`${key}\``,
+        fail("logging", `unknown key \`${key}\` in \`logging\``, "Valid keys: accessLog, json, redact.", [
+          `Remove key \`${key}\``,
         ]);
       }
     }
     for (const key of ["accessLog", "json"] as const) {
       const value = loggingRecord[key];
       if (value !== undefined && typeof value !== "boolean") {
-        fail(`logging.${key}`, `\`logging.${key}\` harus boolean`, "Addendum L.3.", [`Perbaiki nilai \`${key}\``]);
+        fail(`logging.${key}`, `\`logging.${key}\` must be a boolean`, "Addendum L.3.", [`Fix the \`${key}\` value`]);
       }
     }
     const redact = loggingRecord["redact"];
@@ -349,8 +349,8 @@ export function validateConfig(raw: unknown, options: ValidateConfigOptions = {}
       redact !== undefined &&
       (!Array.isArray(redact) || redact.some((name) => typeof name !== "string" || name.length === 0))
     ) {
-      fail("logging.redact", "`logging.redact` harus array nama query-param (string non-kosong)", "Addendum L.3.", [
-        "Perbaiki isi `redact`, atau hapus key tersebut",
+      fail("logging.redact", "`logging.redact` must be an array of query-param names (non-empty strings)", "Addendum L.3.", [
+        "Fix the `redact` contents, or remove the key",
       ]);
     }
   }
@@ -358,14 +358,14 @@ export function validateConfig(raw: unknown, options: ValidateConfigOptions = {}
   const isr = config["isr"];
   if (isr !== undefined) {
     if (typeof isr !== "object" || isr === null || Array.isArray(isr)) {
-      fail("isr", "`isr` harus objek { storage? }", "Dipakai ISR/`revalidate` (Addendum I).", [
-        "Perbaiki bentuk `isr`, atau hapus key tersebut",
+      fail("isr", "`isr` must be an object { storage? }", "Used by ISR/`revalidate` (Addendum I).", [
+        "Fix the `isr` shape, or remove the key",
       ]);
     }
     for (const key of Object.keys(isr as Record<string, unknown>)) {
       if (key !== "storage") {
-        fail("isr", `key \`${key}\` tidak dikenal di \`isr\``, "Key yang valid: storage.", [
-          `Hapus key \`${key}\``,
+        fail("isr", `unknown key \`${key}\` in \`isr\``, "Valid keys: storage.", [
+          `Remove key \`${key}\``,
         ]);
       }
     }
@@ -379,9 +379,9 @@ export function validateConfig(raw: unknown, options: ValidateConfigOptions = {}
     ) {
       fail(
         "isr",
-        "`isr.storage` harus objek dengan method `read` dan `write`",
-        "Bentuk mengikuti `PrerenderStorage` (Addendum I).",
-        ["Pakai `createFileStorage()` dari `@moonsjs/vite/server`, atau implementasi sendiri"],
+        "`isr.storage` must be an object with `read` and `write` methods",
+        "The shape follows `PrerenderStorage` (Addendum I).",
+        ["Use `createFileStorage()` from `@moonsjs/vite/server`, or implement your own"],
       );
     }
   }
@@ -424,8 +424,8 @@ function validateSecurity(
   }
 
   if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
-    fail("security", "`security` harus objek", "Lihat bentuknya ", [
-      "Perbaiki isi `security`, atau hapus key tersebut",
+    fail("security", "`security` must be an object", "See the shape at ", [
+      "Fix the `security` contents, or remove the key",
     ]);
   }
 
@@ -435,9 +435,9 @@ function validateSecurity(
     if (!SECURITY_KEYS.includes(key as (typeof SECURITY_KEYS)[number])) {
       fail(
         key,
-        `key \`${key}\` tidak dikenal di \`security\``,
-        `Key yang valid: ${SECURITY_KEYS.join(", ")}.`,
-        [`Hapus key \`${key}\`, atau perbaiki ejaannya`],
+        `unknown key \`${key}\` in \`security\``,
+        `Valid keys: ${SECURITY_KEYS.join(", ")}.`,
+        [`Remove key \`${key}\`, or fix its spelling`],
       );
     }
   }
@@ -447,8 +447,8 @@ function validateSecurity(
     originWhitelist !== undefined &&
     (!Array.isArray(originWhitelist) || originWhitelist.some((origin) => typeof origin !== "string"))
   ) {
-    fail("originWhitelist", "`originWhitelist` harus array string", "Setiap item adalah origin lengkap.", [
-      "Perbaiki isi `originWhitelist`, atau hapus key tersebut",
+    fail("originWhitelist", "`originWhitelist` must be an array of strings", "Each item is a full origin.", [
+      "Fix the `originWhitelist` contents, or remove the key",
     ]);
   }
 
@@ -457,8 +457,8 @@ function validateSecurity(
     bodyLimitBytes !== undefined &&
     (typeof bodyLimitBytes !== "number" || !Number.isFinite(bodyLimitBytes) || bodyLimitBytes <= 0)
   ) {
-    fail("bodyLimitBytes", "`bodyLimitBytes` harus number positif", "Default: 1_000_000 byte.", [
-      "Perbaiki nilai `bodyLimitBytes`, atau hapus key tersebut",
+    fail("bodyLimitBytes", "`bodyLimitBytes` must be a positive number", "Default: 1_000_000 bytes.", [
+      "Fix the `bodyLimitBytes` value, or remove the key",
     ]);
   }
 
@@ -466,9 +466,9 @@ function validateSecurity(
   if (trustProxy !== undefined && typeof trustProxy !== "boolean") {
     fail(
       "trustProxy",
-      "`security.trustProxy` harus boolean",
-      "Aktifkan hanya bila seluruh trafik lewat reverse proxy yang menimpa `x-forwarded-*` (Addendum J.1).",
-      ["Set `trustProxy: true`, `false`, atau hapus key tersebut"],
+      "`security.trustProxy` must be a boolean",
+      "Enable only when all traffic goes through a reverse proxy that overwrites `x-forwarded-*` (Addendum J.1).",
+      ["Set `trustProxy: true`, `false`, or remove the key"],
     );
   }
 
@@ -480,9 +480,9 @@ function validateSecurity(
   ) {
     fail(
       "security",
-      "`security.serverOnlyPackages` harus array nama paket (string non-kosong)",
-      "Gate paket server-only mencocokkan nama paket npm hasil resolve.",
-      ["Isi dengan nama paket npm, mis. [\"pg\", \"drizzle-orm\"], atau hapus key tersebut"],
+      "`security.serverOnlyPackages` must be an array of package names (non-empty strings)",
+      "The server-only package gate matches resolved npm package names.",
+      ["Fill it with npm package names, e.g. [\"pg\", \"drizzle-orm\"], or remove the key"],
     );
   }
 

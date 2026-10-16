@@ -95,7 +95,7 @@ function formatMoonsError(init: MoonsErrorInit): string {
     lines.push(`${init.file}:${init.line ?? 1}${annotation}`);
   }
 
-  lines.push(`  ${init.message}`, "", init.details, "", "Saran:");
+  lines.push(`  ${init.message}`, "", init.details, "", "Suggestion:");
   init.suggestions.forEach((suggestion, index) => {
     lines.push(`  ${index + 1}. ${suggestion}`);
   });

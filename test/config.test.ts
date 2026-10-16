@@ -42,8 +42,8 @@ test("key root tidak dikenal → E_CONFIG_INVALID dengan format §15", () => {
   expect(thrown).toBeInstanceOf(MoonsError);
   const error = thrown as MoonsError;
   expect(error.code).toBe("E_CONFIG_INVALID");
-  expect(error.format()).toContain("key `routeDir` tidak dikenal");
-  expect(error.format()).toContain("Saran:");
+  expect(error.format()).toContain("unknown key `routeDir`");
+  expect(error.format()).toContain("Suggestion:");
 });
 
 test("key security tidak dikenal → E_CONFIG_INVALID", () => {
@@ -98,8 +98,8 @@ test("validateConfig §14.4: key plugin tak dikenal / hook bukan fungsi ditolak"
   }
   expect(unknownKey).toBeInstanceOf(MoonsError);
   expect((unknownKey as MoonsError).code).toBe("E_CONFIG_INVALID");
-  expect((unknownKey as MoonsError).format()).toContain("key `mencurigakan`");
-  expect((unknownKey as MoonsError).format()).toContain("Saran:");
+  expect((unknownKey as MoonsError).format()).toContain("unknown key `mencurigakan`");
+  expect((unknownKey as MoonsError).format()).toContain("Suggestion:");
 
   let notFunction: unknown;
   try {
@@ -108,7 +108,7 @@ test("validateConfig §14.4: key plugin tak dikenal / hook bukan fungsi ditolak"
     notFunction = error;
   }
   expect(notFunction).toBeInstanceOf(MoonsError);
-  expect((notFunction as MoonsError).format()).toContain("harus fungsi");
+  expect((notFunction as MoonsError).format()).toContain("must be a function");
 });
 
 test("validateConfig Addendum C: security.serverOnlyPackages wajib array string", () => {
@@ -127,7 +127,7 @@ test("validateConfig Addendum C: security.serverOnlyPackages wajib array string"
   expect(thrown).toBeInstanceOf(MoonsError);
   expect((thrown as MoonsError).code).toBe("E_CONFIG_INVALID");
   expect((thrown as MoonsError).format()).toContain("serverOnlyPackages");
-  expect((thrown as MoonsError).format()).toContain("Saran:");
+  expect((thrown as MoonsError).format()).toContain("Suggestion:");
 
   let empty: unknown;
   try {

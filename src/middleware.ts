@@ -14,7 +14,7 @@ export function composeMiddleware(
   options: { code?: MoonsErrorCode; label?: string } = {},
 ): (req: Request) => Promise<Response> {
   const code = options.code ?? "E_INTERNAL";
-  const label = options.label ?? "middleware global";
+  const label = options.label ?? "global middleware";
   return async (req: Request): Promise<Response> => {
     let lastIndex = -1;
 
@@ -22,9 +22,9 @@ export function composeMiddleware(
       if (index <= lastIndex) {
         throw new MoonsError({
           code,
-          message: `${label} memanggil \`next()\` lebih dari sekali`,
-          details: "Middleware harus memanggil `next` tepat satu kali.",
-          suggestions: ["Periksa pemanggilan `next()` di middleware"],
+          message: `${label} called \`next()\` more than once`,
+          details: "Middleware must call `next` exactly once.",
+          suggestions: ["Check the `next()` calls in your middleware"],
         });
       }
       lastIndex = index;
@@ -38,12 +38,12 @@ export function composeMiddleware(
       if (!(response instanceof Response)) {
         throw new MoonsError({
           code,
-          message: `${label} tidak mengembalikan \`Response\``,
+          message: `${label} did not return a \`Response\``,
           details:
-            "Middleware wajib memanggil `next` dan mengembalikan hasilnya, atau mengembalikan `Response` sendiri.",
+            "Middleware must call `next` and return its result, or return its own `Response`.",
           suggestions: [
-            "Kembalikan `await next()` dari middleware",
-            "Atau kembalikan `new Response(...)` secara eksplisit",
+            "Return `await next()` from the middleware",
+            "Or return `new Response(...)` explicitly",
           ],
         });
       }

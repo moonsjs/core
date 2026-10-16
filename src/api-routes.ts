@@ -237,11 +237,11 @@ function assertNoApiConflicts(routes: ReadonlyArray<ApiRouteDefinition>): void {
       throw new MoonsError({
         code: "E_API_ROUTE_CONFLICT",
         file: route.file,
-        message: `dua file API resolve ke pola URL yang sama (\`${route.path}\`)`,
-        details: `Bertabrakan dengan \`${existing.file}\` — \`[id]\` dan \`[uid]\` di posisi yang sama adalah konflik.`,
+        message: `two API files resolve to the same URL pattern (\`${route.path}\`)`,
+        details: `Collides with \`${existing.file}\` — \`[id]\` and \`[uid]\` at the same position are a conflict.`,
         suggestions: [
-          "Samakan nama segmen dinamis, atau hapus salah satu file",
-          "Pastikan `[...rest]` hanya dipakai sebagai segmen terakhir",
+          "Use the same dynamic segment name, or delete one of the files",
+          "Make sure `[...rest]` is only used as the final segment",
         ],
       });
     }

@@ -56,7 +56,7 @@ test("middleware tanpa next → E_INTERNAL", async () => {
   }
   expect(thrown).toBeInstanceOf(MoonsError);
   expect((thrown as MoonsError).code).toBe("E_INTERNAL");
-  expect((thrown as MoonsError).format()).toContain("Saran:");
+  expect((thrown as MoonsError).format()).toContain("Suggestion:");
 });
 
 test("next() dua kali → E_INTERNAL", async () => {

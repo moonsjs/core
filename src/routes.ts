@@ -55,10 +55,10 @@ export function scanRoutes(routesDir: string): RouteDefinition[] {
         throw new MoonsError({
           code: "E_ROUTE_EXPORT_INVALID",
           file: toPosix(file),
-          message: "`_404.tsx` hanya valid di root routesDir",
+          message: "`_404.tsx` is only valid at the routesDir root",
           details:
-            "404 tidak punya konteks direktori; `_error.tsx` boleh bersarang (boundary terdekat), `_404` tidak.",
-          suggestions: ["Pindahkan `_404.tsx` ke root routesDir", "Hapus file tersebut"],
+            "404 has no directory context; `_error.tsx` may be nested (nearest boundary), `_404` may not.",
+          suggestions: ["Move `_404.tsx` to the routesDir root", "Remove that file"],
         });
       }
       const parsedDir = segments.map(parseSegment).filter((s): s is ParsedSegment => s !== null);
@@ -139,19 +139,19 @@ function parseSegment(raw: string): ParsedSegment | null {
   if (/^\[\.\.\..+\]$/.test(raw)) {
     const param = raw.slice(4, -1);
     if (param.length === 0) {
-      throw invalidSegment(raw, "nama param catch-all kosong");
+      throw invalidSegment(raw, "empty catch-all param name");
     }
     return { kind: "catchall", value: "*", param, raw };
   }
   if (/^\[.+\]$/.test(raw)) {
     const param = raw.slice(1, -1);
     if (param.includes("[") || param.includes("]") || param.length === 0) {
-      throw invalidSegment(raw, "nama param dynamic tidak valid");
+      throw invalidSegment(raw, "invalid dynamic param name");
     }
     return { kind: "dynamic", value: `:${param}`, param, raw };
   }
   if (raw.includes("[") || raw.includes("]")) {
-    throw invalidSegment(raw, "segmen dynamic/catch-all harus menempati seluruh nama segmen");
+    throw invalidSegment(raw, "a dynamic/catch-all segment must span the whole segment name");
   }
   return { kind: "static", value: raw, param: null, raw };
 }
@@ -159,11 +159,11 @@ function parseSegment(raw: string): ParsedSegment | null {
 function invalidSegment(raw: string, reason: string): MoonsError {
   return new MoonsError({
     code: "E_ROUTE_EXPORT_INVALID",
-    message: `segmen route \`${raw}\` tidak valid: ${reason}`,
-    details: "Aturan penamaan segmen ada ",
+    message: `invalid route segment \`${raw}\`: ${reason}`,
+    details: "Segment naming rules: ",
     suggestions: [
-      "Perbaiki nama file/direktori route",
-      "Lihat tabel pemetaan file → route ",
+      "Fix the route file/directory name",
+      "See the file → route mapping table ",
     ],
   });
 }
@@ -177,11 +177,11 @@ function toRoutePath(segments: ParsedSegment[]): string {
     if (segment.kind === "catchall" && i !== segments.length - 1) {
       throw new MoonsError({
         code: "E_ROUTE_EXPORT_INVALID",
-        message: "segmen catch-all `[...rest]` wajib menjadi segmen terakhir",
-        details: "Catch-all menangkap sisa URL, sehingga tidak boleh diikuti segmen lain.",
+        message: "catch-all segment `[...rest]` must be the final segment",
+        details: "A catch-all captures the rest of the URL, so it cannot be followed by other segments.",
         suggestions: [
-          "Pindahkan catch-all ke akhir path",
-          "Atau ganti menjadi dynamic segment `[param]`",
+          "Move the catch-all to the end of the path",
+          "Or change it to a dynamic segment `[param]`",
         ],
       });
     }
@@ -229,12 +229,12 @@ function assertNoConflicts(routes: RouteDefinition[]): void {
     if (previous !== undefined) {
       throw new MoonsError({
         code: "E_ROUTE_CONFLICT",
-        message: `keduanya resolve ke ${conflictDisplay(route)}`,
+        message: `both resolve to ${conflictDisplay(route)}`,
         relatedFiles: [previous.file, route.file],
-        details: "Tidak ada fallback untuk konflik route. Ubah salah satu menjadi static, atau gabungkan.",
+        details: "There is no fallback for route conflicts. Turn one of them into a static route, or merge them.",
         suggestions: [
-          "Ganti salah satu dynamic segment menjadi static, atau",
-          "Hapus salah satu file",
+          "Turn one of the dynamic segments into a static one, or",
+          "Delete one of the files",
         ],
       });
     }

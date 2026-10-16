@@ -46,13 +46,13 @@ function collector(): ResponseCollector | null {
 function outsideRequest(fn: string): MoonsError {
   return new MoonsError({
     code: "E_RESPONSE_OUTSIDE_REQUEST",
-    message: `\`${fn}()\` dipanggil di luar request`,
+    message: `\`${fn}()\` was called outside a request`,
     details:
-      "Helper respons hanya hidup di dalam request (loader, serverFn, endpoint API). " +
-      "Saat build/prerender atau di komponen client tidak ada respons untuk diubah.",
+      "Response helpers only live inside a request (loader, serverFn, API endpoint). " +
+      "During build/prerender or in client components there is no response to mutate.",
     suggestions: [
-      "Pindahkan pemanggilan ke loader atau handler `*.server.ts`",
-      "Untuk nilai publik, gunakan `import.meta.env`",
+      "Move the call into a loader or a `*.server.ts` handler",
+      "For public values use `import.meta.env`",
     ],
   });
 }
@@ -72,25 +72,25 @@ function validateHeader(name: string, value: string): void {
   if (!HEADER_NAME.test(name)) {
     throw new MoonsError({
       code: "E_RESPONSE_HEADER_INVALID",
-      message: `nama header \`${name}\` tidak valid`,
-      details: "Nama header harus token HTTP (tanpa spasi, `:`, atau karakter kontrol).",
-      suggestions: ["Gunakan nama seperti `cache-control` atau `x-request-id`"],
+      message: `invalid header name \`${name}\``,
+      details: "Header names must be HTTP tokens (no spaces, `:`, or control characters).",
+      suggestions: ["Use a name like `cache-control` or `x-request-id`"],
     });
   }
   if (FORBIDDEN_HEADERS.has(name.toLowerCase())) {
     throw new MoonsError({
       code: "E_RESPONSE_HEADER_INVALID",
-      message: `header \`${name}\` tidak boleh di-set dari helper`,
-      details: "Header framing/hop-by-hop dikelola runtime; menimpanya merusak protokol.",
-      suggestions: ["Hapus pemanggilan ini", "Gunakan header lain (mis. `cache-control`)"],
+      message: `header \`${name}\` cannot be set from a helper`,
+      details: "Framing/hop-by-hop headers are managed by the runtime; overriding them breaks the protocol.",
+      suggestions: ["Remove this call", "Use another header (e.g. `cache-control`)"],
     });
   }
   if (/[\u0000-\u0008\u000A-\u001F\u007F]/.test(value) || value.includes("\r") || value.includes("\n")) {
     throw new MoonsError({
       code: "E_RESPONSE_HEADER_INVALID",
-      message: `nilai header \`${name}\` memuat karakter kontrol`,
-      details: "CRLF/karakter kontrol bisa dipakai untuk HTTP response splitting.",
-      suggestions: ["Hapus baris baru dari nilai", "Encode nilai bila perlu"],
+      message: `header \`${name}\` value contains control characters`,
+      details: "CRLF/control characters can be used for HTTP response splitting.",
+      suggestions: ["Remove newlines from the value", "Encode the value if needed"],
     });
   }
 }
@@ -101,9 +101,9 @@ function serializeCookie(name: string, value: string, options: CookieOptions | u
   if (!COOKIE_NAME.test(name)) {
     throw new MoonsError({
       code: "E_RESPONSE_HEADER_INVALID",
-      message: `nama cookie \`${name}\` tidak valid`,
-      details: "Nama cookie harus token HTTP.",
-      suggestions: ["Gunakan huruf/angka/`-`/`_` (mis. `session_id`)"],
+      message: `invalid cookie name \`${name}\``,
+      details: "Cookie names must be HTTP tokens.",
+      suggestions: ["Use letters/digits/`-`/`_` (e.g. `session_id`)"],
     });
   }
   const parts = [`${name}=${encodeURIComponent(value)}`];
@@ -116,9 +116,9 @@ function serializeCookie(name: string, value: string, options: CookieOptions | u
     if (!Number.isFinite(options.maxAge) || options.maxAge < 0) {
       throw new MoonsError({
         code: "E_RESPONSE_HEADER_INVALID",
-        message: "`maxAge` cookie harus number >= 0 (detik)",
-        details: "Max-Age mengikuti spesifikasi cookie (detik, bukan milidetik).",
-        suggestions: ["Gunakan mis. `maxAge: 60 * 60 * 24` untuk sehari"],
+        message: "cookie `maxAge` must be a number >= 0 (seconds)",
+        details: "Max-Age follows the cookie spec (seconds, not milliseconds).",
+        suggestions: ["Use e.g. `maxAge: 60 * 60 * 24` for one day"],
       });
     }
     parts.push(`Max-Age=${Math.floor(options.maxAge)}`);
@@ -143,9 +143,9 @@ function serializeCookie(name: string, value: string, options: CookieOptions | u
   if (serialized.includes("\r") || serialized.includes("\n")) {
     throw new MoonsError({
       code: "E_RESPONSE_HEADER_INVALID",
-      message: "nilai cookie memuat CRLF",
-      details: "CRLF pada cookie dilarang.",
-      suggestions: ["Hapus baris baru dari nilai cookie"],
+      message: "cookie value contains CRLF",
+      details: "CRLF in cookies is forbidden.",
+      suggestions: ["Remove newlines from the cookie value"],
     });
   }
   return serialized;

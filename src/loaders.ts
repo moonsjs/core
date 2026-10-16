@@ -43,12 +43,12 @@ export async function runLoaders(
         throw new MoonsError({
           code: "E_INTERNAL",
           file: entry.file,
-          message: "loader mengembalikan `Response`",
+          message: "loader returned a `Response`",
           details:
-            "Loader wajib mengembalikan plain data yang bisa di-devalue; `Response` hanya boleh dari middleware.",
+            "Loaders must return plain data that can be devalue-serialized; only middleware may return a `Response`.",
           suggestions: [
-            "Kembalikan objek data biasa dari loader",
-            "Jika perlu mengubah status/header, gunakan middleware",
+            "Return a plain data object from the loader",
+            "If you need to change the status/headers, use middleware",
           ],
         });
       }
