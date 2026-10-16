@@ -163,3 +163,27 @@ test("Addendum I: `isr.storage` valid diterima; bentuk salah → E_CONFIG_INVALI
   }
   expect((badStorage as MoonsError).code).toBe("E_CONFIG_INVALID");
 });
+
+test("Addendum L.3: `logging` valid diterima; bentuk salah → E_CONFIG_INVALID", () => {
+  const ok = validateConfig({
+    context,
+    logging: { accessLog: true, json: false, redact: ["token"] },
+  });
+  expect(ok.logging).toEqual({ accessLog: true, json: false, redact: ["token"] });
+
+  for (const bad of [
+    { accessLog: "yes" },
+    { json: 1 },
+    { redact: ["ok", 3] },
+    { level: "info" },
+  ]) {
+    let caught: unknown;
+    try {
+      validateConfig({ context, logging: bad });
+    } catch (error) {
+      caught = error;
+    }
+    expect(caught).toBeInstanceOf(MoonsError);
+    expect((caught as MoonsError).code).toBe("E_CONFIG_INVALID");
+  }
+});

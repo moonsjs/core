@@ -106,6 +106,16 @@ export interface MoonsIsrConfig {
   storage?: PrerenderStorage;
 }
 
+/** Addendum L.3: log akses terstruktur runtime (default senyap). */
+export interface MoonsLoggingConfig {
+  /** Log satu baris per request (default `false`). */
+  accessLog?: boolean;
+  /** Format JSON (default `true`); `false` = teks ringkas. */
+  json?: boolean;
+  /** Nama query-param yang nilainya di-redaksi di log (mis. `["token"]`). */
+  redact?: string[];
+}
+
 /** Addendum H: hook lifecycle request (runtime server). */
 export interface MoonsHooks {
   /** Sebelum context/middleware; error di sini → 500. */
@@ -143,6 +153,8 @@ export interface MoonsConfig {
   robots?: MoonsRobotsConfig;
   /** Hook lifecycle request. */
   hooks?: MoonsHooks;
+  /** Log akses terstruktur runtime (Addendum L.3). */
+  logging?: MoonsLoggingConfig;
   /** ISR: storage bersama untuk file prerender (Addendum I). */
   isr?: MoonsIsrConfig;
 }

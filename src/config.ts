@@ -7,6 +7,7 @@ import type {
   MoonsHeaders,
   MoonsHooks,
   MoonsIsrConfig,
+  MoonsLoggingConfig,
   MoonsPlugin,
   MoonsRedirect,
   MoonsRobotsConfig,
@@ -28,6 +29,7 @@ const ROOT_KEYS = [
   "robots",
   "hooks",
   "isr",
+  "logging",
 ] as const;
 const SECURITY_KEYS = ["originWhitelist", "bodyLimitBytes", "serverOnlyPackages", "trustProxy"] as const;
 const PLUGIN_KEYS = [
@@ -310,6 +312,38 @@ export function validateConfig(raw: unknown, options: ValidateConfigOptions = {}
     }
   }
 
+  const logging = config["logging"];
+  if (logging !== undefined) {
+    if (typeof logging !== "object" || logging === null || Array.isArray(logging)) {
+      fail("logging", "`logging` harus objek { accessLog?, json?, redact? }", "Addendum L.3.", [
+        "Perbaiki bentuk `logging`, atau hapus key tersebut",
+      ]);
+    }
+    const loggingRecord = logging as Record<string, unknown>;
+    for (const key of Object.keys(loggingRecord)) {
+      if (key !== "accessLog" && key !== "json" && key !== "redact") {
+        fail("logging", `key \`${key}\` tidak dikenal di \`logging\``, "Key yang valid: accessLog, json, redact.", [
+          `Hapus key \`${key}\``,
+        ]);
+      }
+    }
+    for (const key of ["accessLog", "json"] as const) {
+      const value = loggingRecord[key];
+      if (value !== undefined && typeof value !== "boolean") {
+        fail(`logging.${key}`, `\`logging.${key}\` harus boolean`, "Addendum L.3.", [`Perbaiki nilai \`${key}\``]);
+      }
+    }
+    const redact = loggingRecord["redact"];
+    if (
+      redact !== undefined &&
+      (!Array.isArray(redact) || redact.some((name) => typeof name !== "string" || name.length === 0))
+    ) {
+      fail("logging.redact", "`logging.redact` harus array nama query-param (string non-kosong)", "Addendum L.3.", [
+        "Perbaiki isi `redact`, atau hapus key tersebut",
+      ]);
+    }
+  }
+
   const isr = config["isr"];
   if (isr !== undefined) {
     if (typeof isr !== "object" || isr === null || Array.isArray(isr)) {
@@ -356,6 +390,7 @@ export function validateConfig(raw: unknown, options: ValidateConfigOptions = {}
     ...(robots === undefined ? {} : { robots: robots as MoonsRobotsConfig }),
     ...(hooks === undefined ? {} : { hooks: hooks as MoonsHooks }),
     ...(isr === undefined ? {} : { isr: isr as MoonsIsrConfig }),
+    ...(logging === undefined ? {} : { logging: logging as MoonsLoggingConfig }),
   };
 }
 
