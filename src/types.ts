@@ -4,6 +4,12 @@ export interface MoonsSecurityConfig {
   originWhitelist?: string[];
   bodyLimitBytes?: number;
   /**
+   * Addendum J.1: percayai `x-forwarded-proto`/`x-forwarded-host` dari reverse
+   * proxy di depan server (default `false`). Hanya aktifkan bila SEMUA trafik
+   * memang lewat proxy yang menimpanya — tanpa itu header bisa dipalsukan.
+   */
+  trustProxy?: boolean;
+  /**
    * Tambahan paket server-only untuk gate build (PRD Addendum C) — digabung
    * dengan daftar bawaan; default `[]`. Entri bawaan tidak dapat dihapus.
    */

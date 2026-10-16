@@ -123,6 +123,17 @@ export const ERROR_CATALOG: ReadonlyArray<ErrorCatalogEntry> = [
     ],
   },
   {
+    code: "E_SCHEMA_SERVER_REF",
+    trigger:
+      "Schema `input`/`output` serverFn merujuk nilai non-serverFn yang diimpor dari file `*.server.ts` lain.",
+    details:
+      "Stub client tidak mengekspor nilai server, sehingga referensi schema gagal — dulu muncul sebagai error mentah bundler (`MISSING_EXPORT`).",
+    suggestions: [
+      "Pindahkan konstanta/schema ke modul client-safe (mis. `src/shared/schemas.ts`)",
+      "Lakukan validasi tambahan di handler server, bukan di ekspresi schema",
+    ],
+  },
+  {
     code: "E_ROUTE_CONFLICT",
     trigger: "Dua file route resolve ke URL yang sama.",
     details: "Tidak ada fallback untuk konflik route.",

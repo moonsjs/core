@@ -19,6 +19,7 @@ const EXPECTED_CODES: MoonsErrorCode[] = [
   "E_ISR_INVALID",
   "E_SERVER_IMPORT_IN_CLIENT",
   "E_SCHEMA_LOCAL_REF",
+  "E_SCHEMA_SERVER_REF",
   "E_ROUTE_CONFLICT",
   "E_ROUTE_EXPORT_INVALID",
   "E_CONFIG_INVALID",
@@ -32,7 +33,7 @@ const EXPECTED_CODES: MoonsErrorCode[] = [
   "E_INTERNAL",
 ];
 
-test("katalog runtime memuat seluruh kode §15.2 (22)", () => {
+test("katalog runtime memuat seluruh kode §15.2 (23)", () => {
   expect([...MOONS_ERROR_CODES].sort()).toEqual([...EXPECTED_CODES].sort());
 });
 

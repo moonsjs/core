@@ -29,7 +29,7 @@ const ROOT_KEYS = [
   "hooks",
   "isr",
 ] as const;
-const SECURITY_KEYS = ["originWhitelist", "bodyLimitBytes", "serverOnlyPackages"] as const;
+const SECURITY_KEYS = ["originWhitelist", "bodyLimitBytes", "serverOnlyPackages", "trustProxy"] as const;
 const PLUGIN_KEYS = [
   "name",
   "addRoute",
@@ -42,7 +42,11 @@ const PLUGIN_KEYS = [
 
 const DEFAULT_ROUTES_DIR = "src/routes";
 const DEFAULT_API_DIR = "src/api";
-const DEFAULT_BODY_LIMIT_BYTES = 1_000_000;
+/**
+ * Batas body RPC default (byte). Dipakai juga transport `@moonsjs/vite` untuk
+ * pratinjau awal `content-length` (Addendum J.2) — satu sumber kebenaran.
+ */
+export const DEFAULT_BODY_LIMIT_BYTES = 1_000_000;
 
 /**
  * Identity helper yang **mempertahankan tipe literal** config pengguna.
@@ -363,6 +367,7 @@ function validateSecurity(
     originWhitelist: [],
     bodyLimitBytes: DEFAULT_BODY_LIMIT_BYTES,
     serverOnlyPackages: [],
+    trustProxy: false,
   };
 
   if (raw === undefined) {
@@ -408,6 +413,16 @@ function validateSecurity(
     ]);
   }
 
+  const trustProxy = security["trustProxy"];
+  if (trustProxy !== undefined && typeof trustProxy !== "boolean") {
+    fail(
+      "trustProxy",
+      "`security.trustProxy` harus boolean",
+      "Aktifkan hanya bila seluruh trafik lewat reverse proxy yang menimpa `x-forwarded-*` (Addendum J.1).",
+      ["Set `trustProxy: true`, `false`, atau hapus key tersebut"],
+    );
+  }
+
   const serverOnlyPackages = security["serverOnlyPackages"];
   if (
     serverOnlyPackages !== undefined &&
@@ -427,6 +442,7 @@ function validateSecurity(
     bodyLimitBytes: (bodyLimitBytes as number | undefined) ?? defaults.bodyLimitBytes,
     serverOnlyPackages:
       (serverOnlyPackages as string[] | undefined) ?? defaults.serverOnlyPackages,
+    trustProxy: (trustProxy as boolean | undefined) ?? defaults.trustProxy,
   };
 }
 

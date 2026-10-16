@@ -27,6 +27,7 @@ test("config valid dinormalisasi dengan default §6.1", () => {
     originWhitelist: [],
     bodyLimitBytes: 1_000_000,
     serverOnlyPackages: [],
+    trustProxy: false,
   });
   expect(config.plugins).toEqual([]);
 });

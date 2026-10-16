@@ -1,10 +1,11 @@
-export { defineConfig, validateConfig } from "./config";
+export { DEFAULT_BODY_LIMIT_BYTES, defineConfig, validateConfig } from "./config";
 export type { ValidateConfigOptions } from "./config";
 export { MoonsError, MOONS_ERROR_CODES } from "./errors";
 export type { MoonsErrorCode, MoonsErrorInit } from "./errors";
 export { ERROR_CATALOG, findErrorEntry } from "./error-catalog";
 export type { ErrorCatalogEntry } from "./error-catalog";
 export { computeFnHash, fnRegistryKey } from "./hash";
+export { CLIENT_IP_HEADER } from "./client-ip";
 export { runLoaders } from "./loaders";
 export type { LoaderEntry, LoaderRunArgs, RouteModule } from "./loaders";
 export { composeMiddleware } from "./middleware";
