@@ -43,6 +43,51 @@ export interface MoonsPlugin {
   onShutdown?: (app: App) => void | Promise<void>;
 }
 
+/**
+ * Addendum H: header HTTP statis — dipasang ke semua respons (runtime) dan
+ * ditulis ke `_headers` saat build statis.
+ */
+export type MoonsHeaders = Record<string, string>;
+
+/** Addendum H: redirect — berlaku runtime dan ditulis ke `_redirects`. */
+export interface MoonsRedirect {
+  /** Path sumber, diawali `/` (mis. "/lama"). */
+  from: string;
+  /** Tujuan (`/path` atau URL http(s)). */
+  to: string;
+  /** Default 301. */
+  status?: 301 | 302 | 307 | 308;
+}
+
+/** Addendum H: `sitemap.xml` saat build (hanya path ter-prerender). */
+export interface MoonsSitemapConfig {
+  /** Origin situs, mis. "https://example.com" (tanpa slash akhir). */
+  site: string;
+  /** Prefix path yang dikecualikan. */
+  exclude?: string[];
+}
+
+/** Addendum H: `robots.txt` saat build. */
+export interface MoonsRobotsConfig {
+  /** Tautkan `sitemap.xml` bila sitemap juga dikonfigurasi. Default true. */
+  sitemap?: boolean;
+  /** Daftar `Disallow:` untuk `User-agent: *`. */
+  disallow?: string[];
+}
+
+/** Addendum H: hook lifecycle request (runtime server). */
+export interface MoonsHooks {
+  /** Sebelum context/middleware; error di sini → 500. */
+  onRequest?: (request: Request) => Promise<void> | void;
+  /** Setelah respons jadi; boleh mengembalikan Response pengganti. */
+  onResponse?: (
+    response: Response,
+    request: Request,
+  ) => Promise<Response | void> | Response | void;
+  /** Untuk error yang tidak tertangani pipeline (di luar 404/validasi). */
+  onError?: (error: unknown, request: Request) => Promise<void> | void;
+}
+
 export interface MoonsConfig {
   /** Default: "src/routes". */
   routesDir: string;
@@ -57,6 +102,16 @@ export interface MoonsConfig {
   middleware?: Middleware[];
   security?: MoonsSecurityConfig;
   plugins?: MoonsPlugin[];
+  /** Header HTTP statis (dipasang bila belum ada; ditulis ke `_headers`). */
+  headers?: MoonsHeaders;
+  /** Redirect runtime + `_redirects` saat build statis. */
+  redirects?: MoonsRedirect[];
+  /** `sitemap.xml` saat build (static export). */
+  sitemap?: MoonsSitemapConfig;
+  /** `robots.txt` saat build. */
+  robots?: MoonsRobotsConfig;
+  /** Hook lifecycle request. */
+  hooks?: MoonsHooks;
 }
 
 /** Method HTTP yang legal sebagai handler `src/api` (PRD Addendum D.1). */

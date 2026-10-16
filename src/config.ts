@@ -1,9 +1,31 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { MoonsError } from "./errors";
-import type { Middleware, MoonsConfig, MoonsPlugin, MoonsSecurityConfig } from "./types";
+import type {
+  Middleware,
+  MoonsConfig,
+  MoonsHeaders,
+  MoonsHooks,
+  MoonsPlugin,
+  MoonsRedirect,
+  MoonsRobotsConfig,
+  MoonsSecurityConfig,
+  MoonsSitemapConfig,
+} from "./types";
 
-const ROOT_KEYS = ["routesDir", "apiDir", "context", "middleware", "security", "plugins"] as const;
+const ROOT_KEYS = [
+  "routesDir",
+  "apiDir",
+  "context",
+  "middleware",
+  "security",
+  "plugins",
+  "headers",
+  "redirects",
+  "sitemap",
+  "robots",
+  "hooks",
+] as const;
 const SECURITY_KEYS = ["originWhitelist", "bodyLimitBytes", "serverOnlyPackages"] as const;
 const PLUGIN_KEYS = [
   "name",
@@ -158,6 +180,129 @@ export function validateConfig(raw: unknown, options: ValidateConfigOptions = {}
   const security = validateSecurity(config["security"], fail);
   const context = config["context"] as MoonsConfig["context"];
 
+  // Addendum H: headers / redirects / sitemap / robots / hooks.
+  const headers = config["headers"] ?? {};
+  if (typeof headers !== "object" || headers === null || Array.isArray(headers)) {
+    fail("headers", "`headers` harus objek nama→nilai", "Contoh: { \"x-frame-options\": \"DENY\" }.", [
+      "Perbaiki bentuk `headers`, atau hapus key tersebut",
+    ]);
+  }
+  for (const [name, value] of Object.entries(headers as Record<string, unknown>)) {
+    if (typeof value !== "string" || name.trim().length === 0) {
+      fail("headers", `header \`${name}\` harus bernilai string`, "Nama dan nilai header tidak boleh kosong.", [
+        "Perbaiki nilai header tersebut, atau hapus",
+      ]);
+    }
+  }
+
+  const redirects = config["redirects"] ?? [];
+  if (!Array.isArray(redirects)) {
+    fail("redirects", "`redirects` harus array", "Setiap item: { from, to, status? }.", [
+      "Perbaiki bentuk `redirects`, atau hapus key tersebut",
+    ]);
+  }
+  for (const item of redirects as unknown[]) {
+    if (typeof item !== "object" || item === null || Array.isArray(item)) {
+      fail("redirects", "item `redirects` harus objek { from, to }", "Status opsional: 301/302/307/308.", [
+        "Perbaiki item tersebut, atau hapus",
+      ]);
+    }
+    const record = item as Record<string, unknown>;
+    if (typeof record["from"] !== "string" || !record["from"].startsWith("/")) {
+      fail("redirects", "`from` harus path diawali `/`", "Contoh: from: \"/lama\".", [
+        "Perbaiki nilai `from`",
+      ]);
+    }
+    if (typeof record["to"] !== "string" || record["to"].length === 0) {
+      fail("redirects", "`to` harus string tujuan non-kosong", "Contoh: to: \"/baru\" atau URL penuh.", [
+        "Perbaiki nilai `to`",
+      ]);
+    }
+    const status = record["status"];
+    if (status !== undefined && status !== 301 && status !== 302 && status !== 307 && status !== 308) {
+      fail("redirects", "`status` harus 301, 302, 307, atau 308", "Default 301.", [
+        "Perbaiki nilai `status`, atau hapus (memakai 301)",
+      ]);
+    }
+  }
+
+  const sitemap = config["sitemap"];
+  if (sitemap !== undefined) {
+    if (typeof sitemap !== "object" || sitemap === null || Array.isArray(sitemap)) {
+      fail("sitemap", "`sitemap` harus objek { site, exclude? }", "Dipakai saat build statis.", [
+        "Perbaiki bentuk `sitemap`, atau hapus key tersebut",
+      ]);
+    }
+    const record = sitemap as Record<string, unknown>;
+    for (const key of Object.keys(record)) {
+      if (key !== "site" && key !== "exclude") {
+        fail("sitemap", `key \`${key}\` tidak dikenal di \`sitemap\``, "Key yang valid: site, exclude.", [
+          `Hapus key \`${key}\``,
+        ]);
+      }
+    }
+    if (typeof record["site"] !== "string" || !/^https?:\/\//.test(record["site"])) {
+      fail("sitemap", "`sitemap.site` harus URL http(s)", "Contoh: site: \"https://example.com\".", [
+        "Perbaiki nilai `site`",
+      ]);
+    }
+    const exclude = record["exclude"];
+    if (exclude !== undefined && (!Array.isArray(exclude) || exclude.some((x) => typeof x !== "string"))) {
+      fail("sitemap", "`sitemap.exclude` harus array string", "Isi dengan prefix path, mis. [\"/404\"].", [
+        "Perbaiki nilai `exclude`, atau hapus",
+      ]);
+    }
+  }
+
+  const robots = config["robots"];
+  if (robots !== undefined) {
+    if (typeof robots !== "object" || robots === null || Array.isArray(robots)) {
+      fail("robots", "`robots` harus objek { sitemap?, disallow? }", "Dipakai saat build statis.", [
+        "Perbaiki bentuk `robots`, atau hapus key tersebut",
+      ]);
+    }
+    const record = robots as Record<string, unknown>;
+    for (const key of Object.keys(record)) {
+      if (key !== "sitemap" && key !== "disallow") {
+        fail("robots", `key \`${key}\` tidak dikenal di \`robots\``, "Key yang valid: sitemap, disallow.", [
+          `Hapus key \`${key}\``,
+        ]);
+      }
+    }
+    if (record["sitemap"] !== undefined && typeof record["sitemap"] !== "boolean") {
+      fail("robots", "`robots.sitemap` harus boolean", "Default true bila sitemap dikonfigurasi.", [
+        "Perbaiki nilai `sitemap`, atau hapus",
+      ]);
+    }
+    const disallow = record["disallow"];
+    if (disallow !== undefined && (!Array.isArray(disallow) || disallow.some((x) => typeof x !== "string"))) {
+      fail("robots", "`robots.disallow` harus array string", "Isi dengan prefix path, mis. [\"/internal\"].", [
+        "Perbaiki nilai `disallow`, atau hapus",
+      ]);
+    }
+  }
+
+  const hooks = config["hooks"];
+  if (hooks !== undefined) {
+    if (typeof hooks !== "object" || hooks === null || Array.isArray(hooks)) {
+      fail("hooks", "`hooks` harus objek { onRequest?, onResponse?, onError? }", "Semua hook menerima Request.", [
+        "Perbaiki bentuk `hooks`, atau hapus key tersebut",
+      ]);
+    }
+    for (const [name, value] of Object.entries(hooks as Record<string, unknown>)) {
+      if (name !== "onRequest" && name !== "onResponse" && name !== "onError") {
+        fail("hooks", `hook \`${name}\` tidak dikenal`, "Hook yang valid: onRequest, onResponse, onError.", [
+          `Hapus hook \`${name}\``,
+        ]);
+      }
+      if (typeof value !== "function") {
+        fail("hooks", `hook \`${name}\` harus fungsi`, "Contoh: onResponse: async (res, req) => { ... }.", [
+          `Perbaiki hook \`${name}\`, atau hapus`,
+        ]);
+      }
+    }
+  }
+
   return {
     routesDir,
     apiDir,
@@ -165,6 +310,13 @@ export function validateConfig(raw: unknown, options: ValidateConfigOptions = {}
     middleware: middleware as Middleware[],
     security,
     plugins: plugins as MoonsPlugin[],
+    ...(Object.keys(headers as Record<string, unknown>).length === 0
+      ? {}
+      : { headers: headers as MoonsHeaders }),
+    ...((redirects as unknown[]).length === 0 ? {} : { redirects: redirects as MoonsRedirect[] }),
+    ...(sitemap === undefined ? {} : { sitemap: sitemap as MoonsSitemapConfig }),
+    ...(robots === undefined ? {} : { robots: robots as MoonsRobotsConfig }),
+    ...(hooks === undefined ? {} : { hooks: hooks as MoonsHooks }),
   };
 }
 
