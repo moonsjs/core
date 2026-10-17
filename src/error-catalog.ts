@@ -195,6 +195,17 @@ export const ERROR_CATALOG: ReadonlyArray<ErrorCatalogEntry> = [
     ],
   },
   {
+    code: "E_REQUEST_TIMEOUT",
+    trigger:
+      "A loader, serverFn, or API handler did not produce a response within `requestTimeoutMs` (default 30000 ms).",
+    details:
+      "The transport stops waiting and answers 504. The handler keeps running until it settles; JavaScript cannot cancel it.",
+    suggestions: [
+      "Make the handler faster, or move slow work out of the request path",
+      "Raise `requestTimeoutMs`, or set it to 0 to disable the timeout",
+    ],
+  },
+  {
     code: "E_ENV_IN_CLIENT",
     trigger: "`env()` was called in a module that ends up in the client bundle.",
     details: "`env` is server-only.",

@@ -163,6 +163,12 @@ export interface MoonsConfig {
    * `/x/`). Root, `/_moons/**`, dan path aset (ber-titik) dikecualikan.
    */
   trailingSlash?: "never" | "always";
+  /**
+   * Batas waktu respons (ms) di transport produksi (Addendum R; review G1).
+   * Handler yang melewati batas → 504 `E_REQUEST_TIMEOUT`; `0` menonaktifkan.
+   * Default: 30000.
+   */
+  requestTimeoutMs?: number;
 }
 
 /** Method HTTP yang legal sebagai handler `src/api` (PRD Addendum D.1). */

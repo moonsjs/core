@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.5.0 — 2026-10-17
+- feat: `requestTimeoutMs` config (default 30000, 0 disables) + `E_REQUEST_TIMEOUT` (504)
+
 All notable changes to this package. Entries mirror commit subjects;
 releases are tagged `vX.Y.Z` in the package repository.
 

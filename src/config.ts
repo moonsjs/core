@@ -31,6 +31,7 @@ const ROOT_KEYS = [
   "isr",
   "logging",
   "trailingSlash",
+  "requestTimeoutMs",
 ] as const;
 const SECURITY_KEYS = ["originWhitelist", "bodyLimitBytes", "serverOnlyPackages", "trustProxy"] as const;
 const PLUGIN_KEYS = [
@@ -50,6 +51,13 @@ const DEFAULT_API_DIR = "src/api";
  * pratinjau awal `content-length` (Addendum J.2) — satu sumber kebenaran.
  */
 export const DEFAULT_BODY_LIMIT_BYTES = 1_000_000;
+
+/**
+ * Batas waktu respons transport (Addendum R; review G1). Handler yang
+ * melewati batas ini dijawab 504 `E_REQUEST_TIMEOUT` oleh transport;
+ * `0` menonaktifkan.
+ */
+export const DEFAULT_REQUEST_TIMEOUT_MS = 30_000;
 
 /**
  * Identity helper yang **mempertahankan tipe literal** config pengguna.
@@ -323,6 +331,22 @@ export function validateConfig(raw: unknown, options: ValidateConfigOptions = {}
     );
   }
 
+  const requestTimeoutMs = config["requestTimeoutMs"];
+  if (
+    requestTimeoutMs !== undefined &&
+    (typeof requestTimeoutMs !== "number" ||
+      !Number.isFinite(requestTimeoutMs) ||
+      !Number.isInteger(requestTimeoutMs) ||
+      requestTimeoutMs < 0)
+  ) {
+    fail(
+      "requestTimeoutMs",
+      "`requestTimeoutMs` must be a non-negative integer (milliseconds)",
+      "Addendum R: 0 disables the response timeout; default 30000.",
+      ["Use an integer >= 0 (for example 30000), or remove the key"],
+    );
+  }
+
   const logging = config["logging"];
   if (logging !== undefined) {
     if (typeof logging !== "object" || logging === null || Array.isArray(logging)) {
@@ -392,6 +416,7 @@ export function validateConfig(raw: unknown, options: ValidateConfigOptions = {}
     context,
     middleware: middleware as Middleware[],
     security,
+    requestTimeoutMs: requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS,
     plugins: plugins as MoonsPlugin[],
     ...(Object.keys(headers as Record<string, unknown>).length === 0
       ? {}

@@ -187,3 +187,20 @@ test("Addendum L.3: `logging` valid diterima; bentuk salah → E_CONFIG_INVALID"
     expect((caught as MoonsError).code).toBe("E_CONFIG_INVALID");
   }
 });
+
+test("requestTimeoutMs: default 30000, 0 diizinkan, nilai buruk → E_CONFIG_INVALID", () => {
+  expect(validateConfig({ context }).requestTimeoutMs).toBe(30_000);
+  expect(validateConfig({ context, requestTimeoutMs: 5_000 }).requestTimeoutMs).toBe(5_000);
+  expect(validateConfig({ context, requestTimeoutMs: 0 }).requestTimeoutMs).toBe(0);
+
+  for (const bad of [-1, 1.5, Number.NaN, Number.POSITIVE_INFINITY]) {
+    let thrown: unknown;
+    try {
+      validateConfig({ context, requestTimeoutMs: bad });
+    } catch (error) {
+      thrown = error;
+    }
+    expect(thrown).toBeInstanceOf(MoonsError);
+    expect((thrown as MoonsError).code).toBe("E_CONFIG_INVALID");
+  }
+});

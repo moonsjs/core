@@ -28,12 +28,13 @@ const EXPECTED_CODES: MoonsErrorCode[] = [
   "E_RPC_BAD_ORIGIN",
   "E_RPC_MISSING_HEADER",
   "E_RPC_BODY_TOO_LARGE",
+  "E_REQUEST_TIMEOUT",
   "E_ENV_IN_CLIENT",
   "E_FORBIDDEN_SERVER_IMPORT",
   "E_INTERNAL",
 ];
 
-test("katalog runtime memuat seluruh kode §15.2 (23)", () => {
+test("katalog runtime memuat seluruh kode §15.2 (24)", () => {
   expect([...MOONS_ERROR_CODES].sort()).toEqual([...EXPECTED_CODES].sort());
 });
 

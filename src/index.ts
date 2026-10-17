@@ -1,4 +1,9 @@
-export { DEFAULT_BODY_LIMIT_BYTES, defineConfig, validateConfig } from "./config";
+export {
+  DEFAULT_BODY_LIMIT_BYTES,
+  DEFAULT_REQUEST_TIMEOUT_MS,
+  defineConfig,
+  validateConfig,
+} from "./config";
 export type { ValidateConfigOptions } from "./config";
 export { MoonsError, MOONS_ERROR_CODES } from "./errors";
 export type { MoonsErrorCode, MoonsErrorInit } from "./errors";
