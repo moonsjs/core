@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.6.0 — 2026-10-17
+- feat: `security.clientIpHeader` (trusted client-IP header; requires `trustProxy: true`)
+
 ## v0.5.0 — 2026-10-17
 - feat: `requestTimeoutMs` config (default 30000, 0 disables) + `E_REQUEST_TIMEOUT` (504)
 

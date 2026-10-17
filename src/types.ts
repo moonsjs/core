@@ -10,6 +10,13 @@ export interface MoonsSecurityConfig {
    */
   trustProxy?: boolean;
   /**
+   * Addendum S (integrasi Cloudflare): header tepercaya untuk IP klien saat
+   * `trustProxy: true`. Default `"x-forwarded-for"`. Di belakang Cloudflare
+   * gunakan `"cf-connecting-ip"` — XFF di-append CF sehingga entri pertama
+   * bisa dipalsukan klien. Wajib disertai `trustProxy: true`.
+   */
+  clientIpHeader?: string;
+  /**
    * Tambahan paket server-only untuk gate build (PRD Addendum C) — digabung
    * dengan daftar bawaan; default `[]`. Entri bawaan tidak dapat dihapus.
    */

@@ -33,7 +33,13 @@ const ROOT_KEYS = [
   "trailingSlash",
   "requestTimeoutMs",
 ] as const;
-const SECURITY_KEYS = ["originWhitelist", "bodyLimitBytes", "serverOnlyPackages", "trustProxy"] as const;
+const SECURITY_KEYS = [
+  "originWhitelist",
+  "bodyLimitBytes",
+  "serverOnlyPackages",
+  "trustProxy",
+  "clientIpHeader",
+] as const;
 const PLUGIN_KEYS = [
   "name",
   "addRoute",
@@ -442,6 +448,7 @@ function validateSecurity(
     bodyLimitBytes: DEFAULT_BODY_LIMIT_BYTES,
     serverOnlyPackages: [],
     trustProxy: false,
+    clientIpHeader: "x-forwarded-for",
   };
 
   if (raw === undefined) {
@@ -497,6 +504,29 @@ function validateSecurity(
     );
   }
 
+  const clientIpHeader = security["clientIpHeader"];
+  if (clientIpHeader !== undefined) {
+    if (
+      typeof clientIpHeader !== "string" ||
+      !/^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/.test(clientIpHeader)
+    ) {
+      fail(
+        "clientIpHeader",
+        "`security.clientIpHeader` must be a valid HTTP header name",
+        "Addendum S: header tepercaya untuk IP klien di belakang proxy (mis. \"cf-connecting-ip\").",
+        ["Use a header name such as \"cf-connecting-ip\", or remove the key"],
+      );
+    }
+    if (trustProxy !== true) {
+      fail(
+        "clientIpHeader",
+        "`security.clientIpHeader` requires `security.trustProxy: true`",
+        "Tanpa trustProxy, header dari klien diabaikan — nilai ini tidak akan terbaca dan menyesatkan.",
+        ["Set `security.trustProxy: true` (hanya bila semua trafik lewat proxy), or remove the key"],
+      );
+    }
+  }
+
   const serverOnlyPackages = security["serverOnlyPackages"];
   if (
     serverOnlyPackages !== undefined &&
@@ -517,6 +547,8 @@ function validateSecurity(
     serverOnlyPackages:
       (serverOnlyPackages as string[] | undefined) ?? defaults.serverOnlyPackages,
     trustProxy: (trustProxy as boolean | undefined) ?? defaults.trustProxy,
+    clientIpHeader:
+      (clientIpHeader as string | undefined)?.toLowerCase() ?? defaults.clientIpHeader,
   };
 }
 

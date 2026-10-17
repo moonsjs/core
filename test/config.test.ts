@@ -28,6 +28,7 @@ test("config valid dinormalisasi dengan default §6.1", () => {
     bodyLimitBytes: 1_000_000,
     serverOnlyPackages: [],
     trustProxy: false,
+    clientIpHeader: "x-forwarded-for",
   });
   expect(config.plugins).toEqual([]);
 });
@@ -203,4 +204,35 @@ test("requestTimeoutMs: default 30000, 0 diizinkan, nilai buruk → E_CONFIG_INV
     expect(thrown).toBeInstanceOf(MoonsError);
     expect((thrown as MoonsError).code).toBe("E_CONFIG_INVALID");
   }
+});
+
+test("security.clientIpHeader: default x-forwarded-for, normalisasi, wajib trustProxy", () => {
+  const base = validateConfig({ context });
+  expect(base.security?.clientIpHeader).toBe("x-forwarded-for");
+
+  const custom = validateConfig({
+    context,
+    security: { trustProxy: true, clientIpHeader: "CF-Connecting-IP" },
+  });
+  expect(custom.security?.clientIpHeader).toBe("cf-connecting-ip");
+
+  for (const bad of ["bad header", "with:colon", ""]) {
+    let thrown: unknown;
+    try {
+      validateConfig({ context, security: { trustProxy: true, clientIpHeader: bad } });
+    } catch (error) {
+      thrown = error;
+    }
+    expect(thrown).toBeInstanceOf(MoonsError);
+    expect((thrown as MoonsError).code).toBe("E_CONFIG_INVALID");
+  }
+
+  let thrown: unknown;
+  try {
+    validateConfig({ context, security: { clientIpHeader: "cf-connecting-ip" } });
+  } catch (error) {
+    thrown = error;
+  }
+  expect(thrown).toBeInstanceOf(MoonsError);
+  expect((thrown as MoonsError).message).toContain("requires `security.trustProxy: true`");
 });
