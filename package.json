@@ -1,6 +1,6 @@
 {
   "name": "@moonsjs/core",
-  "version": "0.1.14",
+  "version": "0.2.0",
   "type": "module",
   "license": "MIT",
   "sideEffects": false,
@@ -36,11 +36,16 @@
       "types": "./src/response.ts",
       "bun": "./src/response.ts",
       "default": "./dist/response.js"
+    },
+    "./url-policy": {
+      "types": "./src/url-policy.ts",
+      "bun": "./src/url-policy.ts",
+      "default": "./dist/url-policy.js"
     }
   },
   "scripts": {
     "prepack": "bun run build",
-    "build": "rm -rf dist && tsc -p tsconfig.json --emitDeclarationOnly && bun build src/index.ts src/serialize.ts src/signals.ts src/response.ts --outdir dist --target node --format esm --splitting --sourcemap=external --external devalue",
+    "build": "rm -rf dist && tsc -p tsconfig.json --emitDeclarationOnly && bun build src/index.ts src/serialize.ts src/signals.ts src/response.ts src/url-policy.ts --outdir dist --target node --format esm --splitting --sourcemap=external --external devalue",
     "test": "bun test"
   },
   "dependencies": {

@@ -1,27 +1,32 @@
 /**
- * Addendum M: kebijakan trailing slash (H.8). Mengembalikan path kanonik bila
- * `pathname` tidak kanonik (butuh redirect 308), atau `null` bila sudah
- * kanonik / dikecualikan.
+ * Addendum M + O: trailing-slash policy.
  *
- * Pengecualian: root `/`, endpoint internal `/_moons/**`, dan path yang
- * segmen terakhirnya memuat titik (aset/file) — path itu tidak pernah
- * di-redirect.
+ * `applyTrailingSlash` returns the canonical pathname (used by Link/navigate on
+ * both server and client). `trailingSlashRedirect` returns the canonical path
+ * only when a 308 is required.
+ *
+ * Exemptions: root `/`, internal `/_moons/**`, and paths whose last segment
+ * contains a dot (static assets).
  */
-export function trailingSlashRedirect(
-  pathname: string,
-  policy: "never" | "always",
-): string | null {
+function isTrailingSlashExempt(pathname: string): boolean {
   if (pathname === "/" || pathname.length === 0) {
-    return null;
+    return true;
   }
   if (pathname.startsWith("/_moons/")) {
-    return null;
+    return true;
   }
-  // Segmen terakhir dihitung TANPA slash akhir (`/file.css/` tetap dianggap aset).
   const withoutTrailing = pathname.replace(/\/+$/, "");
   const lastSegment = withoutTrailing.split("/").pop() ?? "";
-  if (lastSegment.includes(".")) {
-    return null;
+  return lastSegment.includes(".");
+}
+
+/** Return the canonical form of `pathname` for the given policy. */
+export function applyTrailingSlash(
+  pathname: string,
+  policy: "never" | "always",
+): string {
+  if (isTrailingSlashExempt(pathname)) {
+    return pathname;
   }
   const hasTrailingSlash = pathname.endsWith("/");
   if (policy === "never" && hasTrailingSlash) {
@@ -30,5 +35,14 @@ export function trailingSlashRedirect(
   if (policy === "always" && !hasTrailingSlash) {
     return `${pathname}/`;
   }
-  return null;
+  return pathname;
+}
+
+/** Return the canonical path when a redirect is required, or `null`. */
+export function trailingSlashRedirect(
+  pathname: string,
+  policy: "never" | "always",
+): string | null {
+  const canonical = applyTrailingSlash(pathname, policy);
+  return canonical === pathname ? null : canonical;
 }

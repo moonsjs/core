@@ -1,21 +1,33 @@
-import { expect, test } from "bun:test";
-import { trailingSlashRedirect } from "@moonsjs/core";
+import { describe, expect, test } from "bun:test";
+import { applyTrailingSlash, trailingSlashRedirect } from "../src/url-policy";
 
-test("M: trailingSlashRedirect — never/always + pengecualian", () => {
-  // never: buang slash akhir.
-  expect(trailingSlashRedirect("/about/", "never")).toBe("/about");
-  expect(trailingSlashRedirect("/about//", "never")).toBe("/about");
-  expect(trailingSlashRedirect("/about", "never")).toBeNull();
+describe("applyTrailingSlash", () => {
+  test("never removes trailing slashes", () => {
+    expect(applyTrailingSlash("/about/", "never")).toBe("/about");
+    expect(applyTrailingSlash("/a/b/", "never")).toBe("/a/b");
+    expect(applyTrailingSlash("/about", "never")).toBe("/about");
+  });
 
-  // always: tambah slash akhir.
-  expect(trailingSlashRedirect("/about", "always")).toBe("/about/");
-  expect(trailingSlashRedirect("/about/", "always")).toBeNull();
+  test("always appends a trailing slash", () => {
+    expect(applyTrailingSlash("/about", "always")).toBe("/about/");
+    expect(applyTrailingSlash("/a/b", "always")).toBe("/a/b/");
+    expect(applyTrailingSlash("/about/", "always")).toBe("/about/");
+  });
 
-  // pengecualian: root, internal, aset ber-titik.
-  for (const policy of ["never", "always"] as const) {
-    expect(trailingSlashRedirect("/", policy)).toBeNull();
-    expect(trailingSlashRedirect("/_moons/fn/abc/", policy)).toBeNull();
-    expect(trailingSlashRedirect("/assets/app.js", policy)).toBeNull();
-    expect(trailingSlashRedirect("/file.css/", policy)).toBeNull();
-  }
+  test("root, framework paths, and assets are exempt", () => {
+    expect(applyTrailingSlash("/", "always")).toBe("/");
+    expect(applyTrailingSlash("/_moons/fn/abc", "always")).toBe("/_moons/fn/abc");
+    expect(applyTrailingSlash("/assets/app.js", "always")).toBe("/assets/app.js");
+    expect(applyTrailingSlash("/assets/app.js/", "never")).toBe("/assets/app.js/");
+  });
+});
+
+describe("trailingSlashRedirect", () => {
+  test("returns the canonical path only when a redirect is required", () => {
+    expect(trailingSlashRedirect("/about", "always")).toBe("/about/");
+    expect(trailingSlashRedirect("/about/", "always")).toBeNull();
+    expect(trailingSlashRedirect("/about/", "never")).toBe("/about");
+    expect(trailingSlashRedirect("/about", "never")).toBeNull();
+    expect(trailingSlashRedirect("/", "always")).toBeNull();
+  });
 });

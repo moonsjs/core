@@ -6,7 +6,7 @@ export { ERROR_CATALOG, findErrorEntry } from "./error-catalog";
 export type { ErrorCatalogEntry } from "./error-catalog";
 export { computeFnHash, fnRegistryKey } from "./hash";
 export { CLIENT_IP_HEADER } from "./client-ip";
-export { trailingSlashRedirect } from "./url-policy";
+export { applyTrailingSlash, trailingSlashRedirect } from "./url-policy";
 export { runLoaders } from "./loaders";
 export type { LoaderEntry, LoaderRunArgs, RouteModule } from "./loaders";
 export { composeMiddleware } from "./middleware";
